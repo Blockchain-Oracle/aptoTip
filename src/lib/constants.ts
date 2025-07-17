@@ -1,4 +1,4 @@
-// TipLink Application Constants
+// TipLink Application Constants (Simplified Architecture)
 
 // Tip amounts in cents (for USD display)
 export const DEFAULT_TIP_AMOUNTS = [
@@ -16,35 +16,21 @@ export const PLATFORM_CONFIG = {
   MAX_MESSAGE_LENGTH: 280, // Tweet-like message length
 } as const
 
-// User types
-export const USER_TYPES = {
-  RESTAURANT: 1,
-  CREATOR: 2,
+// Profile types
+export const PROFILE_TYPES = {
+  RESTAURANT: 'restaurant',
+  CREATOR: 'creator',
 } as const
 
-// Profile categories
+// Profile categories (Simplified)
 export const RESTAURANT_CATEGORIES = [
-  'fast-food',
-  'fine-dining',
-  'casual-dining',
-  'cafe',
-  'bar',
-  'food-truck',
-  'bakery',
-  'other'
+  'Pizza', 'Italian', 'Sushi', 'Japanese', 'Healthy', 'Organic', 
+  'Vegan', 'Coffee', 'Fine Dining', 'Cafe', 'Family-Friendly'
 ] as const
 
 export const CREATOR_CATEGORIES = [
-  'music',
-  'art',
-  'gaming',
-  'education',
-  'comedy',
-  'cooking',
-  'fitness',
-  'tech',
-  'lifestyle',
-  'other'
+  'Music', 'Art', 'Gaming', 'Digital Art', 'NFT', 'Streaming',
+  'Singer-Songwriter', 'Acoustic', 'Cyberpunk', 'Fantasy', 'Tutorials'
 ] as const
 
 // Social platforms
@@ -52,12 +38,10 @@ export const SOCIAL_PLATFORMS = [
   { key: 'instagram', label: 'Instagram', icon: 'instagram' },
   { key: 'twitter', label: 'Twitter/X', icon: 'twitter' },
   { key: 'youtube', label: 'YouTube', icon: 'youtube' },
-  { key: 'tiktok', label: 'TikTok', icon: 'music' },
-  { key: 'twitch', label: 'Twitch', icon: 'twitch' },
   { key: 'website', label: 'Website', icon: 'globe' }
 ] as const
 
-// Animation configurations
+// Animation configurations (Keep Magic UI animations)
 export const ANIMATIONS = {
   PAGE_TRANSITION: {
     initial: { opacity: 0, y: 20 },
@@ -82,41 +66,22 @@ export const ANIMATIONS = {
   }
 } as const
 
-// QR Code settings
-export const QR_CODE_CONFIG = {
-  SIZE: 256,
-  ERROR_CORRECTION_LEVEL: 'M' as const,
-  MARGIN: 2,
-  COLOR: {
-    DARK: '#1f2937',
-    LIGHT: '#ffffff'
-  }
-} as const
-
 // File upload limits
 export const UPLOAD_LIMITS = {
   MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
   ALLOWED_IMAGE_TYPES: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
-  ALLOWED_VIDEO_TYPES: ['video/mp4', 'video/webm', 'video/mov'],
-  MAX_IMAGES_PER_PROFILE: 10,
-  MAX_PORTFOLIO_ITEMS: 20
+  MAX_IMAGES_PER_PROFILE: 5,
 } as const
 
-// API endpoints
+// API endpoints (Simplified)
 export const API_ENDPOINTS = {
-  AUTH: {
-    GOOGLE: '/api/auth/google',
-    KEYLESS: '/api/auth/keyless',
-    SESSION: '/api/auth/session'
-  },
   PROFILES: {
+    CREATE: '/api/profiles/create',
     RESTAURANT: '/api/profiles/restaurant',
     CREATOR: '/api/profiles/creator'
   },
   TIPS: '/api/tips',
-  QR_CODES: '/api/qr-codes',
-  MEDIA: '/api/media',
-  ANALYTICS: '/api/analytics'
+  MEDIA: '/api/media'
 } as const
 
 // Success messages
@@ -124,7 +89,6 @@ export const SUCCESS_MESSAGES = {
   TIP_SENT: 'Tip sent successfully! 🎉',
   PROFILE_CREATED: 'Profile created successfully!',
   PROFILE_UPDATED: 'Profile updated successfully!',
-  QR_CODE_CREATED: 'QR code generated successfully!',
   MEDIA_UPLOADED: 'Media uploaded successfully!'
 } as const
 
@@ -137,5 +101,31 @@ export const ERROR_MESSAGES = {
   PROFILE_NOT_FOUND: 'Profile not found.',
   UNAUTHORIZED: 'Please sign in to continue.',
   FILE_TOO_LARGE: 'File size exceeds the maximum limit.',
-  INVALID_FILE_TYPE: 'File type not supported.'
+  INVALID_FILE_TYPE: 'File type not supported.',
+  INVALID_WALLET_ADDRESS: 'Please enter a valid Aptos wallet address.'
+} as const
+
+// Route paths (Simplified)
+export const ROUTES = {
+  HOME: '/',
+  CREATE: {
+    MAIN: '/create',
+    RESTAURANT: '/create/restaurant',
+    CREATOR: '/create/creator'
+  },
+  RESTAURANTS: {
+    LIST: '/restaurants',
+    PROFILE: (slug: string) => `/restaurants/${slug}`,
+    CATEGORY: (category: string) => `/restaurants/category/${category}`
+  },
+  CREATORS: {
+    LIST: '/creators',
+    PROFILE: (slug: string) => `/creators/${slug}`,
+    CATEGORY: (category: string) => `/creators/category/${category}`
+  },
+  TIP: {
+    RESTAURANT: (slug: string) => `/tip/${slug}`,
+    CREATOR: (slug: string) => `/tip/creator/${slug}`,
+    SUCCESS: (slug: string) => `/tip/${slug}/success`
+  }
 } as const 
