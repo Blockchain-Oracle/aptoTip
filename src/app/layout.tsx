@@ -1,42 +1,51 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
+import { Providers } from '@/providers';
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "TipLink - Tip Anyone with just Google",
-  description: "Revolutionary tipping for restaurants and creators. No crypto knowledge required. Zero friction. Instant payments.",
-  keywords: [
-    "tipping",
-    "cryptocurrency",
-    "aptos",
-    "google auth",
-    "restaurants",
-    "creators",
-    "keyless accounts",
-    "web3",
-    "digital payments"
-  ],
+  title: "AptoTip - Tip Anyone with just Google",
+  description: "Create tipping profiles for restaurants and creators. Accept tips with Google sign-in using Aptos blockchain. Zero fees, instant payments.",
+  keywords: ["tipping", "restaurants", "creators", "aptos", "blockchain", "google", "keyless"],
+  authors: [{ name: "AptoTip Team" }],
+  creator: "AptoTip",
+  publisher: "AptoTip",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL('https://aptotip.io'),
+  alternates: {
+    canonical: '/',
+  },
+  icons: {
+    icon: '/image.png',
+    shortcut: '/image.png',
+    apple: '/image.png',
+  },
   openGraph: {
-    type: "website",
-    siteName: "TipLink",
-    title: "TipLink - Tip Anyone with just Google",
-    description: "Revolutionary tipping for restaurants and creators. No crypto knowledge required. Zero friction. Instant payments.",
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://aptotip.io',
+    siteName: "AptoTip",
+    title: "AptoTip - Tip Anyone with just Google",
+    description: "Create tipping profiles for restaurants and creators. Accept tips with Google sign-in using Aptos blockchain.",
     images: [
       {
-        url: "/og-image.png",
+        url: '/image.png',
         width: 1200,
         height: 630,
-        alt: "TipLink - Revolutionary Tipping Platform",
+        alt: "AptoTip - Revolutionary Tipping Platform",
       },
     ],
   },
   twitter: {
-    card: "summary_large_image",
-    title: "TipLink - Tip Anyone with just Google",
-    description: "Revolutionary tipping for restaurants and creators. No crypto knowledge required. Zero friction. Instant payments.",
-    images: ["/og-image.png"],
-    creator: "@tiplink_app",
+    card: 'summary_large_image',
+    title: "AptoTip - Tip Anyone with just Google",
+    description: "Create tipping profiles for restaurants and creators. Accept tips with Google sign-in using Aptos blockchain.",
+    creator: "@aptotip_app",
   },
   robots: "index, follow",
 };
@@ -55,7 +64,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="font-sans antialiased">
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

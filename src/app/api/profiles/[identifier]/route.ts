@@ -6,10 +6,10 @@ import { eq, or } from 'drizzle-orm';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { identifier: string } }
+  { params }: { params: Promise<{ identifier: string }> }
 ) {
   try {
-    const { identifier } = params;
+    const { identifier } = await params;
     
     // Query profile by ID or slug
     const profile = await db
@@ -49,14 +49,21 @@ export async function GET(
       }
     }
     
-    // Get blockchain balance
-    const balance = await aptosService.getAccountBalance(profileData.walletAddress);
+    // Get blockchain balance (with error handling for network issues)
+    let balance = 0;
+    try {
+      const balanceData = await aptosService.getAccountBalance(profileData.walletAddress);
+      balance = balanceData?.balance || 0;
+    } catch (error) {
+      console.warn('Failed to fetch blockchain balance:', error);
+      // Continue without blockchain balance
+    }
     
     // Combine all data
     const result = {
       ...profileData,
       ...additionalData,
-      balance: balance?.balance || 0,
+      balance,
     };
     
     return NextResponse.json(result);

@@ -1,460 +1,408 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { 
-  User, 
-  ArrowLeft, 
-  Upload, 
-  Music, 
-  Palette, 
-  Gamepad2, 
-  Camera,
-  Instagram,
-  Youtube,
-  Twitter,
-  Globe,
-  Tag,
-  CheckCircle,
-  Sparkles,
-  Wallet,
-  Heart,
-  Users
-} from 'lucide-react'
-
+import { useKeylessAccount } from '@/hooks/useKeylessAccount'
+import { Loader2, LogIn, Camera, Image as ImageIcon, AlertCircle, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ROUTES } from '@/lib/constants'
-
-const creatorCategories = [
-  "Music", "Art", "Gaming", "Digital Art", "NFT", "Streaming",
-  "Singer-Songwriter", "Acoustic", "Cyberpunk", "Fantasy", "Tutorials",
-  "Photography", "Video", "Podcast", "Writing", "Comedy", "Dance",
-  "Fashion", "Beauty", "Fitness", "Cooking", "Education"
-]
-
-const socialPlatforms = [
-  { name: 'Instagram', icon: Instagram, color: 'text-pink-500' },
-  { name: 'YouTube', icon: Youtube, color: 'text-red-500' },
-  { name: 'Twitter', icon: Twitter, color: 'text-blue-500' },
-  { name: 'Website', icon: Globe, color: 'text-gray-500' }
-]
+import { useEffect, useState } from 'react'
+import { CreateProfileButton } from '@/components/blockchain/CreateProfileButton'
+import { UploadButton } from '@/components/ui/upload-button'
+import { toast } from 'sonner'
 
 export default function CreateCreatorPage() {
-  const router = useRouter()
-  const [step, setStep] = useState(1)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { account, isAuthenticated, isLoading, createAuthSession, getAuthUrl, error } = useKeylessAccount()
   const [formData, setFormData] = useState({
     name: '',
-    walletAddress: '',
     bio: '',
     category: '',
-    tags: [] as string[],
-    followers: '',
     imageUrl: '',
     bannerUrl: '',
     portfolioImages: [] as string[],
     socialLinks: {
+      twitter: '',
       instagram: '',
       youtube: '',
-      twitter: '',
       website: ''
     }
   })
-
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  // Debug logging
+  useEffect(() => {
+    console.log('Auth state:', { isAuthenticated, isLoading, error })
+  }, [isAuthenticated, isLoading, error])
+
+  const handleLogin = async () => {
+    try {
+      console.log('Starting login process...')
+      const ephemeralKeyPair = await createAuthSession()
+      console.log('Created ephemeral key pair:', ephemeralKeyPair)
+      const authUrl = getAuthUrl(ephemeralKeyPair)
+      console.log('Redirecting to:', authUrl)
+      window.location.href = authUrl
+    } catch (error) {
+      console.error('Login error:', error)
+    }
+  }
+
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    if (field.includes('.')) {
+      const [parent, child] = field.split('.')
+      setFormData(prev => ({
+        ...prev,
+        [parent]: {
+          ...(prev[parent as keyof typeof prev] as Record<string, string>),
+          [child]: value
+        }
+      }))
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value
+      }))
+    }
+    
+    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
     }
   }
 
-  const handleSocialLinkChange = (platform: string, value: string) => {
+  const handleImageUpload = (type: 'profile' | 'banner' | 'portfolio') => (url: string) => {
+    if (type === 'profile') {
+      setFormData(prev => ({ ...prev, imageUrl: url }))
+    } else if (type === 'banner') {
+      setFormData(prev => ({ ...prev, bannerUrl: url }))
+    } else if (type === 'portfolio') {
+      setFormData(prev => ({ 
+        ...prev, 
+        portfolioImages: [...prev.portfolioImages, url] 
+      }))
+    }
+  }
+
+  const handleUploadError = (error: string) => {
+    toast.error('Upload failed', { description: error })
+  }
+
+  const removePortfolioImage = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      socialLinks: {
-        ...prev.socialLinks,
-        [platform]: value
-      }
+      portfolioImages: prev.portfolioImages.filter((_, i) => i !== index)
     }))
   }
 
-  const handleTagToggle = (tag: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.includes(tag) 
-        ? prev.tags.filter(t => t !== tag)
-        : [...prev.tags, tag]
-    }))
-  }
-
-  const validateStep = (currentStep: number) => {
+  const validateForm = () => {
     const newErrors: Record<string, string> = {}
 
-    if (currentStep === 1) {
-      if (!formData.name.trim()) newErrors.name = 'Creator name is required'
-      if (!formData.walletAddress.trim()) newErrors.walletAddress = 'Wallet address is required'
-      if (!formData.bio.trim()) newErrors.bio = 'Bio is required'
-      if (formData.bio.length < 50) newErrors.bio = 'Bio must be at least 50 characters'
+    if (!formData.name.trim()) {
+      newErrors.name = 'Creator name is required'
     }
 
-    if (currentStep === 2) {
-      if (!formData.category) newErrors.category = 'Please select a main category'
-      if (formData.tags.length === 0) newErrors.tags = 'Please select at least one tag'
+    if (!formData.bio.trim()) {
+      newErrors.bio = 'Bio is required'
+    } else if (formData.bio.length < 50) {
+      newErrors.bio = 'Bio must be at least 50 characters'
     }
 
-    if (currentStep === 3) {
-      // Optional step - no validation required
+    if (!formData.imageUrl) {
+      newErrors.imageUrl = 'Profile image is required'
+    }
+
+    if (!formData.bannerUrl) {
+      newErrors.bannerUrl = 'Banner image is required'
+    }
+
+    if (formData.portfolioImages.length === 0) {
+      newErrors.portfolioImages = 'At least one portfolio image is required'
     }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleNext = () => {
-    if (validateStep(step)) {
-      setStep(step + 1)
-    }
-  }
-
-  const handleBack = () => {
-    setStep(step - 1)
-  }
-
-  const handleSubmit = async () => {
-    if (!validateStep(step)) return
-
-    setIsSubmitting(true)
-    
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Generate slug from name
-      const slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-      
-      // Redirect to success or profile page
-      router.push(`/creators/${slug}`)
-    } catch (error) {
-      console.error('Error creating profile:', error)
-      setIsSubmitting(false)
-    }
-  }
-
-  const progress = (step / 3) * 100
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/create" className="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Create</span>
-            </Link>
-            
-            <div className="flex items-center space-x-2">
-              <User className="w-6 h-6 text-purple-600" />
-              <span className="font-semibold text-lg">Create Creator Profile</span>
-            </div>
-            
-            <div className="w-24"></div> {/* Spacer for centering */}
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Connecting to your account...</h3>
+            <p className="text-gray-600">Please wait while we set up your keyless account</p>
           </div>
         </div>
       </div>
+    )
+  }
 
+  // Show login prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Create Creator Profile</h1>
+            <p className="text-gray-600 mb-8">Sign in to create your creator profile and start receiving tips</p>
+            
+            <div className="bg-white rounded-lg shadow-lg p-8">
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold mb-2">Get Started with AptoTip</h2>
+                <p className="text-gray-600">Connect your Google account to create your creator profile</p>
+              </div>
+              
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 text-sm">{error}</p>
+                </div>
+              )}
+              
+              <Button 
+                onClick={handleLogin}
+                className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+                size="lg"
+              >
+                <LogIn className="w-5 h-5 mr-2" />
+                Sign in with Google
+              </Button>
+              
+              <p className="text-sm text-gray-500 mt-4">
+                No crypto knowledge required. We'll set up your keyless account automatically.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
-          {/* Progress Bar */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Step {step} of 3</span>
-              <span className="text-sm text-gray-500">{Math.round(progress)}% Complete</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <motion.div
-                className="bg-gradient-to-r from-purple-500 to-pink-600 h-2 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.5 }}
-              />
-            </div>
-          </motion.div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4 text-center">Create Creator Profile</h1>
+          <p className="text-gray-600 mb-8 text-center">Set up your creator profile to start receiving tips</p>
+          
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Creator Name *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., Alice Sterling"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                    errors.name ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+              </div>
 
-          {/* Step Content */}
-          <motion.div
-            key={step}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            {step === 1 && (
-              <Card className="border-0 shadow-xl">
-                <CardHeader className="text-center">
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <User className="w-8 h-8 text-purple-600" />
-                  </div>
-                  <CardTitle className="text-2xl">Basic Information</CardTitle>
-                  <p className="text-gray-600">Tell us about yourself and your content</p>
-                </CardHeader>
-                
-                <CardContent className="space-y-6">
-                  {/* Creator Name */}
-                  <div>
-                    <Label htmlFor="name">Creator Name *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
-                      placeholder="e.g., Alice Sterling"
-                      className={errors.name ? 'border-red-500' : ''}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Bio *
+                </label>
+                <textarea
+                  placeholder="Tell us about yourself, your content, and what you create..."
+                  rows={4}
+                  value={formData.bio}
+                  onChange={(e) => handleInputChange('bio', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                    errors.bio ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                <div className="flex justify-between text-sm text-gray-500 mt-1">
+                  <span>{formData.bio.length}/500 characters</span>
+                  <span>Minimum 50 characters</span>
+                </div>
+                {errors.bio && <p className="text-red-500 text-sm mt-1">{errors.bio}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Category
+                </label>
+                <select 
+                  value={formData.category}
+                  onChange={(e) => handleInputChange('category', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="">Select a category</option>
+                  <option value="artist">Artist</option>
+                  <option value="musician">Musician</option>
+                  <option value="writer">Writer</option>
+                  <option value="podcaster">Podcaster</option>
+                  <option value="streamer">Streamer</option>
+                  <option value="educator">Educator</option>
+                  <option value="developer">Developer</option>
+                  <option value="designer">Designer</option>
+                  <option value="photographer">Photographer</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Social Media Links
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://twitter.com/yourusername"
+                  value={formData.socialLinks.twitter}
+                  onChange={(e) => handleInputChange('socialLinks.twitter', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 mb-2"
+                />
+                <input
+                  type="url"
+                  placeholder="https://instagram.com/yourusername"
+                  value={formData.socialLinks.instagram}
+                  onChange={(e) => handleInputChange('socialLinks.instagram', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 mb-2"
+                />
+                <input
+                  type="url"
+                  placeholder="https://youtube.com/@yourchannel"
+                  value={formData.socialLinks.youtube}
+                  onChange={(e) => handleInputChange('socialLinks.youtube', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 mb-2"
+                />
+                <input
+                  type="url"
+                  placeholder="https://yourwebsite.com"
+                  value={formData.socialLinks.website}
+                  onChange={(e) => handleInputChange('socialLinks.website', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              {/* Profile Image */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Profile Image *
+                </label>
+                {formData.imageUrl ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={formData.imageUrl}
+                      alt="Profile"
+                      className="w-32 h-32 rounded-full object-cover border-2 border-purple-200"
                     />
-                    {errors.name && (
-                      <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
                   </div>
-
-                  {/* Wallet Address */}
-                  <div>
-                    <Label htmlFor="walletAddress">Aptos Wallet Address *</Label>
-                    <div className="relative">
-                      <Input
-                        id="walletAddress"
-                        value={formData.walletAddress}
-                        onChange={(e) => handleInputChange('walletAddress', e.target.value)}
-                        placeholder="0x..."
-                        className={errors.walletAddress ? 'border-red-500' : ''}
-                      />
-                      <Wallet className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    </div>
-                    {errors.walletAddress && (
-                      <p className="text-red-500 text-sm mt-1">{errors.walletAddress}</p>
-                    )}
-                    <p className="text-gray-500 text-sm mt-1">
-                      This is where you'll receive tips from your supporters
-                    </p>
-                  </div>
-
-                  {/* Bio */}
-                  <div>
-                    <Label htmlFor="bio">Bio *</Label>
-                    <Textarea
-                      id="bio"
-                      value={formData.bio}
-                      onChange={(e) => handleInputChange('bio', e.target.value)}
-                      placeholder="Tell your audience about yourself, your content, what you create..."
-                      rows={4}
-                      className={errors.bio ? 'border-red-500' : ''}
-                    />
-                    {errors.bio && (
-                      <p className="text-red-500 text-sm mt-1">{errors.bio}</p>
-                    )}
-                    <p className="text-gray-500 text-sm mt-1">
-                      {formData.bio.length}/500 characters
-                    </p>
-                  </div>
-
-                  {/* Follower Count */}
-                  <div>
-                    <Label htmlFor="followers">Approximate Follower Count (Optional)</Label>
-                    <div className="relative">
-                      <Input
-                        id="followers"
-                        value={formData.followers}
-                        onChange={(e) => handleInputChange('followers', e.target.value)}
-                        placeholder="e.g., 12500"
-                        type="number"
-                      />
-                      <Users className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    </div>
-                    <p className="text-gray-500 text-sm mt-1">
-                      This helps supporters understand your reach
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {step === 2 && (
-              <Card className="border-0 shadow-xl">
-                <CardHeader className="text-center">
-                  <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Tag className="w-8 h-8 text-pink-600" />
-                  </div>
-                  <CardTitle className="text-2xl">Categories & Content</CardTitle>
-                  <p className="text-gray-600">Help supporters discover your content</p>
-                </CardHeader>
-                
-                <CardContent className="space-y-6">
-                  {/* Main Category */}
-                  <div>
-                    <Label htmlFor="category">Main Category *</Label>
-                    <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                      <SelectTrigger className={errors.category ? 'border-red-500' : ''}>
-                        <SelectValue placeholder="Select your main category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {creatorCategories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.category && (
-                      <p className="text-red-500 text-sm mt-1">{errors.category}</p>
-                    )}
-                  </div>
-
-                  {/* Tags */}
-                  <div>
-                    <Label>Content Tags *</Label>
-                    <p className="text-sm text-gray-600 mb-3">Select all that apply to your content</p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {creatorCategories.map((tag) => (
-                        <Button
-                          key={tag}
-                          variant={formData.tags.includes(tag) ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleTagToggle(tag)}
-                          className="justify-start"
-                        >
-                          {formData.tags.includes(tag) && (
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                          )}
-                          {tag}
-                        </Button>
-                      ))}
-                    </div>
-                    {errors.tags && (
-                      <p className="text-red-500 text-sm mt-1">{errors.tags}</p>
-                    )}
-                  </div>
-
-                  <Alert>
-                    <Heart className="h-4 w-4" />
-                    <AlertDescription>
-                      These categories help your supporters find you and understand your content better.
-                    </AlertDescription>
-                  </Alert>
-                </CardContent>
-              </Card>
-            )}
-
-            {step === 3 && (
-              <Card className="border-0 shadow-xl">
-                <CardHeader className="text-center">
-                  <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Camera className="w-8 h-8 text-indigo-600" />
-                  </div>
-                  <CardTitle className="text-2xl">Portfolio & Social Links</CardTitle>
-                  <p className="text-gray-600">Showcase your work and connect with supporters</p>
-                </CardHeader>
-                
-                <CardContent className="space-y-6">
-                  {/* Social Links */}
-                  <div>
-                    <Label>Social Media Links (Optional)</Label>
-                    <p className="text-sm text-gray-600 mb-3">Help supporters find you on other platforms</p>
-                    
-                    <div className="space-y-3">
-                      {socialPlatforms.map((platform) => {
-                        const Icon = platform.icon
-                        const fieldName = platform.name.toLowerCase()
-                        return (
-                          <div key={platform.name} className="relative">
-                            <Icon className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${platform.color}`} />
-                            <Input
-                              value={formData.socialLinks[fieldName as keyof typeof formData.socialLinks]}
-                              onChange={(e) => handleSocialLinkChange(fieldName, e.target.value)}
-                              placeholder={`Your ${platform.name} username or URL`}
-                              className="pl-10"
-                            />
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Portfolio Images */}
-                  <div>
-                    <Label>Portfolio Images (Optional)</Label>
-                    <p className="text-sm text-gray-600 mb-3">Showcase your best work</p>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-                      <Camera className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600 mb-2">Upload portfolio images</p>
-                      <p className="text-sm text-gray-500">Coming soon - for now, we'll use placeholder images</p>
-                    </div>
-                  </div>
-
-                  <Alert>
-                    <Sparkles className="h-4 w-4" />
-                    <AlertDescription>
-                      Perfect! You're ready to create your profile and start receiving tips from supporters worldwide.
-                    </AlertDescription>
-                  </Alert>
-                </CardContent>
-              </Card>
-            )}
-          </motion.div>
-
-          {/* Navigation Buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex justify-between mt-8"
-          >
-            {step > 1 ? (
-              <Button variant="outline" onClick={handleBack}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-            ) : (
-              <div></div>
-            )}
-
-            {step < 3 ? (
-              <Button onClick={handleNext} className="bg-purple-600 hover:bg-purple-700">
-                Next Step
-                <ArrowLeft className="w-4 h-4 ml-2 rotate-180" />
-              </Button>
-            ) : (
-              <Button 
-                onClick={handleSubmit} 
-                disabled={isSubmitting}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Creating Profile...
-                  </>
                 ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Create Profile
-                  </>
+                  <UploadButton
+                    endpoint="profileImage"
+                    onUploadComplete={handleImageUpload('profile')}
+                    onUploadError={handleUploadError}
+                  >
+                    Upload Profile Image
+                  </UploadButton>
                 )}
-              </Button>
-            )}
-          </motion.div>
+                {errors.imageUrl && <p className="text-red-500 text-sm mt-1">{errors.imageUrl}</p>}
+              </div>
+
+              {/* Banner Image */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Banner Image *
+                </label>
+                {formData.bannerUrl ? (
+                  <div className="relative">
+                    <img
+                      src={formData.bannerUrl}
+                      alt="Banner"
+                      className="w-full h-32 rounded-lg object-cover border-2 border-purple-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, bannerUrl: '' }))}
+                      className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <UploadButton
+                    endpoint="bannerImage"
+                    onUploadComplete={handleImageUpload('banner')}
+                    onUploadError={handleUploadError}
+                  >
+                    Upload Banner Image
+                  </UploadButton>
+                )}
+                {errors.bannerUrl && <p className="text-red-500 text-sm mt-1">{errors.bannerUrl}</p>}
+              </div>
+
+              {/* Portfolio Images */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Portfolio Images * (At least 1)
+                </label>
+                {formData.portfolioImages.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    {formData.portfolioImages.map((url, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={url}
+                          alt={`Portfolio ${index + 1}`}
+                          className="w-full h-24 rounded-lg object-cover border border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removePortfolioImage(index)}
+                          className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <UploadButton
+                  endpoint="portfolioImages"
+                  onUploadComplete={handleImageUpload('portfolio')}
+                  onUploadError={handleUploadError}
+                  maxFiles={10}
+                >
+                  Add Portfolio Image
+                </UploadButton>
+                {errors.portfolioImages && <p className="text-red-500 text-sm mt-1">{errors.portfolioImages}</p>}
+              </div>
+
+              <div className="pt-6">
+                <CreateProfileButton
+                  profileType="creator"
+                  walletAddress={account?.accountAddress?.toString() || ''}
+                  profileData={{
+                    name: formData.name,
+                    bio: formData.bio,
+                    imageUrl: formData.imageUrl,
+                    bannerUrl: formData.bannerUrl,
+                    portfolioImages: formData.portfolioImages,
+                    socialLinks: formData.socialLinks,
+                    followers: 0,
+                    tags: formData.category ? [formData.category] : []
+                  }}
+                  onSuccess={(txHash) => {
+                    console.log('Profile created successfully:', txHash)
+                    toast.success('Creator profile created successfully!')
+                  }}
+                  onError={(error) => {
+                    console.error('Profile creation failed:', error)
+                    toast.error('Failed to create profile', { description: error })
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

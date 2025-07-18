@@ -258,6 +258,14 @@ export async function seedDatabase() {
     
     // Create blockchain profiles (this will sync with contract)
     console.log('⛓️ Creating blockchain profiles...');
+    console.log('⏭️ Skipping blockchain profile creation - profiles will be created when users sign up');
+    console.log('   Note: Move contract only allows creating profiles for the transaction signer');
+    console.log('   Test profiles will be created in database only');
+    
+    // TODO: Blockchain profile creation will happen when real users sign up
+    // The current Move contract only allows creating profiles for the transaction signer
+    // For seeding test data, we'll skip this step
+    /*
     // Import tipping service conditionally to avoid initialization errors
     let tippingService: any = null;
     try {
@@ -290,6 +298,7 @@ export async function seedDatabase() {
     } else {
       console.log('⏭️ Skipping blockchain profile creation (tipping service not available)');
     }
+    */
     
     // Create sample tips with realistic data
     console.log('💸 Creating sample tips...');

@@ -33,7 +33,7 @@ export function formatPercentage(value: number, precision: number = 1): string {
 }
 
 /**
- * Format date for display (e.g., "Dec 25, 2024")
+ * Format date for display (e.g., "Dec 25, 2025")
  */
 export function formatDate(date: Date | string | number): string {
   const dateObj = new Date(date)
@@ -41,7 +41,7 @@ export function formatDate(date: Date | string | number): string {
 }
 
 /**
- * Format date and time for display (e.g., "Dec 25, 2024 at 2:30 PM")
+ * Format date and time for display (e.g., "Dec 25, 2025 at 2:30 PM")
  */
 export function formatDateTime(date: Date | string | number): string {
   const dateObj = new Date(date)

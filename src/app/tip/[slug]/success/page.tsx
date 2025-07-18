@@ -23,7 +23,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { getRestaurantBySlug } from '@/lib/mock-data'
+import { useProfile, isRestaurant } from '@/hooks/useProfiles'
 import { formatCurrency } from '@/lib/format'
 import { ROUTES } from '@/lib/constants'
 
@@ -37,7 +37,7 @@ export default function SuccessPage({ params }: SuccessPageProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { slug } = use(params)
-  const restaurant = getRestaurantBySlug(slug)
+  const { data: restaurant, isLoading, error } = useProfile(slug)
 
   const [showCelebration, setShowCelebration] = useState(true)
   const [copied, setCopied] = useState(false)
@@ -45,8 +45,22 @@ export default function SuccessPage({ params }: SuccessPageProps) {
   const tipAmount = parseInt(searchParams.get('amount') || '1000')
   const tipMessage = searchParams.get('message') || ''
 
-  // Mock transaction hash
-  const transactionHash = '0x' + Math.random().toString(16).substr(2, 64)
+  // Get real transaction hash from URL parameters
+  const transactionHash = searchParams.get('txHash') || ''
+
+  // Get the correct explorer URL based on network
+  const getExplorerUrl = (hash: string) => {
+    const network = process.env.NEXT_PUBLIC_APTOS_NETWORK || 'devnet'
+    const baseUrl = 'https://explorer.aptoslabs.com'
+    
+    // For mainnet, we don't need the network parameter
+    if (network === 'mainnet') {
+      return `${baseUrl}/txn/${hash}`
+    }
+    
+    // For testnet and devnet, we include the network parameter
+    return `${baseUrl}/txn/${hash}?network=${network}`
+  }
 
   useEffect(() => {
     // Hide celebration animation after 3 seconds
@@ -57,11 +71,23 @@ export default function SuccessPage({ params }: SuccessPageProps) {
     return () => clearTimeout(timer)
   }, [])
 
-  if (!restaurant) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !restaurant || !isRestaurant(restaurant)) {
     notFound()
   }
 
   const handleCopyTransaction = async () => {
+    if (!transactionHash) return
     await navigator.clipboard.writeText(transactionHash)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -70,7 +96,7 @@ export default function SuccessPage({ params }: SuccessPageProps) {
   const handleShare = async () => {
     const shareData = {
       title: `I just tipped ${restaurant.name}!`,
-      text: `Just sent ${formatCurrency(tipAmount)} to ${restaurant.name} using TipLink! 🎉`,
+      text: `Just sent ${formatCurrency(tipAmount)} to ${restaurant.name} using AptoTip! 🎉`,
       url: window.location.href
     }
 
@@ -162,7 +188,7 @@ export default function SuccessPage({ params }: SuccessPageProps) {
                 <div className="flex items-center space-x-4 p-4 bg-white rounded-lg">
                   <div className="relative w-16 h-16 rounded-lg overflow-hidden">
                     <Image
-                      src={restaurant.imageUrl}
+                      src={restaurant.imageUrl || '/images/default-restaurant.jpg'}
                       alt={restaurant.name}
                       fill
                       className="object-cover"
@@ -172,9 +198,9 @@ export default function SuccessPage({ params }: SuccessPageProps) {
                     <h3 className="font-semibold text-lg">{restaurant.name}</h3>
                     <div className="flex items-center space-x-2 text-sm text-gray-600">
                       <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                      <span>{(restaurant.averageTip / 100).toFixed(1)}</span>
+                      <span>{(restaurant.averageTip || 0) / 100}</span>
                       <span>•</span>
-                      <span>{restaurant.address}</span>
+                      <span>{restaurant.address || 'Address not available'}</span>
                       {restaurant.verified && (
                         <Badge className="bg-blue-600 text-xs">Verified</Badge>
                       )}
@@ -196,7 +222,7 @@ export default function SuccessPage({ params }: SuccessPageProps) {
                   
                   <div className="flex items-center justify-between text-sm text-gray-600">
                     <span>Network:</span>
-                    <span>Aptos Blockchain</span>
+                    <span className="font-medium capitalize">{process.env.NEXT_PUBLIC_APTOS_NETWORK || 'devnet'}</span>
                   </div>
                   
                   <hr className="border-green-200" />
@@ -218,30 +244,36 @@ export default function SuccessPage({ params }: SuccessPageProps) {
                 {/* Transaction Hash */}
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="text-sm font-medium text-gray-900 mb-2">Transaction Hash:</div>
-                  <div className="flex items-center space-x-2">
-                    <code className="text-xs text-gray-600 bg-white px-2 py-1 rounded flex-1 overflow-hidden">
-                      {transactionHash.slice(0, 16)}...{transactionHash.slice(-8)}
-                    </code>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCopyTransaction}
-                      disabled={copied}
-                    >
-                      {copied ? (
-                        <CheckCircle className="w-4 h-4" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(`https://explorer.aptoslabs.com/txn/${transactionHash}`, '_blank')}
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  {transactionHash ? (
+                    <div className="flex items-center space-x-2">
+                      <code className="text-xs text-gray-600 bg-white px-2 py-1 rounded flex-1 overflow-hidden">
+                        {transactionHash.slice(0, 16)}...{transactionHash.slice(-8)}
+                      </code>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCopyTransaction}
+                        disabled={copied}
+                      >
+                        {copied ? (
+                          <CheckCircle className="w-4 h-4" />
+                        ) : (
+                          <Copy className="w-4 h-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(getExplorerUrl(transactionHash), '_blank')}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500 italic">
+                      Transaction hash not available
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -270,7 +302,7 @@ export default function SuccessPage({ params }: SuccessPageProps) {
                   <Button
                     variant="outline"
                     onClick={() => {
-                      const tweetText = `Just sent ${formatCurrency(tipAmount)} to ${restaurant.name} using @TipLink! Making tipping as easy as signing into Google 🚀 #AptosHackathon`
+                      const tweetText = `Just sent ${formatCurrency(tipAmount)} to ${restaurant.name} using @AptoTip! Making tipping as easy as signing into Google 🚀 #AptosHackathon`
                       window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`, '_blank')
                     }}
                     className="h-12"

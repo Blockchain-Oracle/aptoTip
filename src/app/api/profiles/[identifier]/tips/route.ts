@@ -7,10 +7,10 @@ import { eq, or, desc } from 'drizzle-orm';
 // GET - Fetch tips for a profile
 export async function GET(
   request: NextRequest,
-  { params }: { params: { identifier: string } }
+  { params }: { params: Promise<{ identifier: string }> }
 ) {
   try {
-    const { identifier } = params;
+    const { identifier } = await params;
     
     // First, get the profile to get the ID
     const profile = await db
@@ -46,10 +46,10 @@ export async function GET(
 // POST - Create a new tip
 export async function POST(
   request: NextRequest,
-  { params }: { params: { identifier: string } }
+  { params }: { params: Promise<{ identifier: string }> }
 ) {
   try {
-    const { identifier } = params;
+    const { identifier } = await params;
     const body = await request.json();
     
     const { amount, message, tipperAddress, tipperAccount } = body;

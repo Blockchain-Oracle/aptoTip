@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { getCreatorsByCategory, type Creator } from '@/lib/mock-data'
+import { useProfiles, isCreator } from '@/hooks/useProfiles'
 import { formatCurrency, formatCompactNumber } from '@/lib/format'
 
 interface CreatorCategoryPageProps {
@@ -79,7 +79,8 @@ const categoryInfo = {
 
 export default function CreatorCategoryPage({ params }: CreatorCategoryPageProps) {
   const { category } = use(params)
-  const creators = getCreatorsByCategory(category)
+  const { data: allProfiles, isLoading, error } = useProfiles({ category: 'creator' })
+  const creators = allProfiles?.filter(profile => isCreator(profile) && profile.category === category) || []
   const info = categoryInfo[category as keyof typeof categoryInfo]
 
   // If category doesn't exist, show helpful alternatives
@@ -195,7 +196,7 @@ export default function CreatorCategoryPage({ params }: CreatorCategoryPageProps
         </p>
         <div className="flex items-center justify-center space-x-4">
           <Badge variant="outline" className="text-sm">
-            {creators.length} creators
+            {creators?.length || 0} creators
           </Badge>
           <Badge variant="outline" className="text-sm">
             Powered by Aptos
@@ -204,7 +205,7 @@ export default function CreatorCategoryPage({ params }: CreatorCategoryPageProps
       </motion.div>
 
       {/* Results */}
-      {creators.length > 0 ? (
+      {creators && creators.length > 0 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {creators.map((creator, index) => (
             <CreatorCard key={creator.id} creator={creator} index={index} />
@@ -220,7 +221,7 @@ export default function CreatorCategoryPage({ params }: CreatorCategoryPageProps
           <div className="text-6xl mb-4">🔍</div>
           <h3 className="text-xl font-semibold mb-2">No {info.title.toLowerCase()} creators yet</h3>
           <p className="text-gray-600 mb-6">
-            Be the first {info.title.toLowerCase()} creator to join TipLink!
+            Be the first {info.title.toLowerCase()} creator to join AptoTip!
           </p>
           <Button asChild size="lg" className="bg-purple-600 hover:bg-purple-700">
             <Link href="/signup/creator">Join as Creator</Link>
@@ -229,7 +230,7 @@ export default function CreatorCategoryPage({ params }: CreatorCategoryPageProps
       )}
 
       {/* Call to Action */}
-      {creators.length > 0 && (
+      {creators && creators.length > 0 && (
         <motion.div
           className="text-center mt-16 p-8 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl"
           initial={{ opacity: 0, y: 20 }}
@@ -238,7 +239,7 @@ export default function CreatorCategoryPage({ params }: CreatorCategoryPageProps
         >
           <h3 className="text-2xl font-bold mb-4">Are you a {info.title.toLowerCase()} creator?</h3>
           <p className="text-gray-600 mb-6">
-            Join TipLink and start receiving direct support from your fans
+            Join AptoTip and start receiving direct support from your fans
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" className="bg-purple-600 hover:bg-purple-700">
@@ -254,7 +255,7 @@ export default function CreatorCategoryPage({ params }: CreatorCategoryPageProps
   )
 }
 
-function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
+function CreatorCard({ creator, index }: { creator: any; index: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -282,7 +283,7 @@ function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
               <Avatar className="w-12 h-12 border-2 border-white">
                 <AvatarImage src={creator.avatarUrl} alt={creator.name} />
                 <AvatarFallback>
-                  {creator.name.split(' ').map(n => n[0]).join('')}
+                  {creator.name.split(' ').map((n: string) => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
             </div>
@@ -323,7 +324,7 @@ function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
             
             <div className="flex items-center justify-between">
               <div className="flex flex-wrap gap-1">
-                {creator.tags.slice(0, 2).map((tag) => (
+                {creator.tags.slice(0, 2).map((tag: string) => (
                   <Badge key={tag} variant="secondary" className="text-xs">
                     {tag}
                   </Badge>

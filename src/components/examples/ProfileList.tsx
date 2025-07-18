@@ -1,11 +1,12 @@
 'use client';
 
 import { useProfiles, useRestaurants, useCreators, isRestaurant, isCreator } from '@/hooks/useProfiles';
-import { useTips, useSendTip } from '@/hooks/useTips';
+import { useTips } from '@/hooks/useTips';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { SendTipButton, CreateProfileButton } from '@/components/blockchain/ActionButtons';
 import { useState } from 'react';
 
 export function ProfileList() {
@@ -98,19 +99,10 @@ export function ProfileList() {
 
 function ProfileCard({ profile }: { profile: any }) {
   const { data: tips } = useTips(profile.id);
-  const sendTip = useSendTip();
 
-  const handleTip = async () => {
-    try {
-      await sendTip.mutateAsync({
-        profileId: profile.id,
-        amount: 5.00, // $5.00
-        message: 'Great work!',
-        tipperAddress: '0x1234567890abcdef1234567890abcdef12345678',
-      });
-    } catch (error) {
-      console.error('Failed to send tip:', error);
-    }
+  const handleTipSuccess = (hash: string) => {
+    console.log('Tip sent successfully:', hash);
+    // You can add toast notification here
   };
 
   return (
@@ -156,13 +148,14 @@ function ProfileCard({ profile }: { profile: any }) {
           </div>
         )}
 
-        <Button 
-          onClick={handleTip} 
-          disabled={sendTip.isPending}
+        {/* Use the new SendTipButton component */}
+        <SendTipButton
+          recipientAddress={profile.walletAddress}
+          amount={5.00}
+          message="Great work! 🎉"
+          onSuccess={handleTipSuccess}
           className="w-full"
-        >
-          {sendTip.isPending ? 'Sending...' : 'Send Tip'}
-        </Button>
+        />
       </CardContent>
     </Card>
   );

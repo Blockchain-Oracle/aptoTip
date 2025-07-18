@@ -22,7 +22,8 @@ import {
   Utensils,
   Coffee,
   Car,
-  Sparkles
+  Sparkles,
+  LogOut
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -38,6 +39,14 @@ import {
 } from '@/components/ui/navigation-menu'
 import { ROUTES } from '@/lib/constants'
 import { NetworkIndicator } from '@/components/ui/network-switcher'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface HeaderProps {
   variant?: 'marketing' | 'public' | 'dashboard'
@@ -63,11 +72,15 @@ export function Header({ variant = 'marketing', showSearch = false, user = null 
             transition={{ duration: 0.3 }}
           >
             <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <Heart className="w-4 h-4 text-white" />
+              <div className="w-10 h-10 flex items-center justify-center">
+                <img 
+                  src="/image.png" 
+                  alt="AptoTip Logo" 
+                  className="w-10 h-10 object-contain"
+                />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                TipLink
+                AptoTip
               </span>
             </Link>
             
@@ -128,13 +141,13 @@ export function Header({ variant = 'marketing', showSearch = false, user = null 
                                     Restaurant Directory
                                   </div>
                                   <p className="text-sm leading-tight text-blue-700">
-                                    Discover restaurants using TipLink
+                                    Discover restaurants using AptoTip
                                   </p>
                                 </Link>
                               </NavigationMenuLink>
                             </li>
                             <ListItem href={ROUTES.RESTAURANTS.LIST} title="Browse Restaurants" icon={<Store className="w-4 h-4" />}>
-                              Discover restaurants using TipLink
+                              Discover restaurants using AptoTip
                             </ListItem>
                             <ListItem href={ROUTES.RESTAURANTS.CATEGORY('Pizza')} title="Pizza & Italian" icon={<Utensils className="w-4 h-4" />}>
                               Authentic pizza and Italian cuisine
@@ -295,13 +308,49 @@ function UserMenu({ user }: { user: { name: string; avatar?: string; email: stri
         <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
       </Button>
       
-      <div className="flex items-center space-x-2">
-        <Avatar className="w-8 h-8">
-          <AvatarImage src={user.avatar} alt={user.name} />
-          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-        </Avatar>
-        <span className="text-sm font-medium text-gray-700">{user.name}</span>
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="flex items-center space-x-2 p-2">
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={user.avatar} alt={user.name} />
+              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium text-gray-700 hidden md:inline">{user.name}</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">{user.name}</p>
+              <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href={`/dashboard/${user.type}`}>
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Dashboard
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`/edit/${user.type}/${user.name.toLowerCase().replace(' ', '-')}`}>
+              <Settings className="w-4 h-4 mr-2" />
+              Edit Profile
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/account-switch">
+              <User className="w-4 h-4 mr-2" />
+              Switch Account
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem className="text-red-600 focus:text-red-600">
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }

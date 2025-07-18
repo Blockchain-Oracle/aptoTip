@@ -4,16 +4,18 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { notFound } from 'next/navigation'
-import { use } from 'react'
-import { Star, MapPin, Phone, Globe, Clock, Heart, Share2, QrCode, Camera } from 'lucide-react'
+import { use, useState } from 'react'
+import { Star, MapPin, Phone, Globe, Clock, Heart, Share2, QrCode, Camera, Loader2, Edit } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { getRestaurantBySlug } from '@/lib/mock-data'
+import { useProfile, isRestaurant } from '@/hooks/useProfiles'
+import { useKeylessAccount } from '@/hooks/useKeylessAccount'
 import { formatCurrency, formatCompactNumber } from '@/lib/format'
 import { ROUTES } from '@/lib/constants'
+import { AccountSwitcherModal } from '@/components/auth/AccountSwitcherModal'
 
 interface RestaurantPageProps {
   params: Promise<{
@@ -23,11 +25,49 @@ interface RestaurantPageProps {
 
 export default function RestaurantPage({ params }: RestaurantPageProps) {
   const { slug } = use(params)
-  const restaurant = getRestaurantBySlug(slug)
+  const { data: profile, isLoading, error } = useProfile(slug)
+  const { account, isAuthenticated } = useKeylessAccount()
+  const [showAccountSwitcher, setShowAccountSwitcher] = useState(false)
 
-  if (!restaurant) {
+  // Check if current user owns this profile
+  const isOwner = isAuthenticated && account && profile && 
+    account.accountAddress.toString() === profile.walletAddress
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 lg:px-6 py-8">
+        <div className="text-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <h3 className="text-xl font-semibold mb-2">Loading restaurant...</h3>
+          <p className="text-gray-600">Getting the details ready</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 lg:px-6 py-8">
+        <div className="text-center py-16">
+          <div className="text-6xl mb-4">😞</div>
+          <h3 className="text-xl font-semibold mb-2">Failed to load restaurant</h3>
+          <p className="text-gray-600 mb-4">{error.message}</p>
+          <Button onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // Not found or not a restaurant
+  if (!profile || !isRestaurant(profile)) {
     notFound()
   }
+
+  const restaurant = profile
 
   return (
     <div className="container mx-auto px-4 lg:px-6 py-8">
@@ -39,7 +79,7 @@ export default function RestaurantPage({ params }: RestaurantPageProps) {
         transition={{ duration: 0.6 }}
       >
         <Image
-          src={restaurant.bannerUrl}
+          src={restaurant.bannerUrl || '/placeholder-banner.jpg'}
           alt={restaurant.name}
           fill
           className="object-cover"
@@ -60,8 +100,8 @@ export default function RestaurantPage({ params }: RestaurantPageProps) {
               <div className="flex items-center space-x-4 mb-4">
                 <div className="flex items-center space-x-1">
                   <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  <span className="font-semibold">{(restaurant.averageTip / 100).toFixed(1)}</span>
-                  <span className="text-white/80">({restaurant.tipCount} tips)</span>
+                  <span className="font-semibold">{((restaurant.averageTip || 0) / 100).toFixed(1)}</span>
+                  <span className="text-white/80">({restaurant.tipCount || 0} tips)</span>
                 </div>
                 
                 <div className="flex items-center space-x-1 text-white/80">
@@ -71,7 +111,7 @@ export default function RestaurantPage({ params }: RestaurantPageProps) {
               </div>
               
               <div className="flex flex-wrap gap-2">
-                {restaurant.tags.map((tag) => (
+                {restaurant.tags?.map((tag) => (
                   <Badge key={tag} variant="secondary" className="bg-white/20 text-white border-white/30">
                     {tag}
                   </Badge>
@@ -88,6 +128,47 @@ export default function RestaurantPage({ params }: RestaurantPageProps) {
                 <Heart className="w-4 h-4 mr-2" />
                 Save
               </Button>
+              {isOwner ? (
+                <Button 
+                  asChild
+                  size="sm" 
+                  variant="secondary" 
+                  className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                >
+                  <Link href={`/edit/restaurant/${restaurant.slug}`}>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Profile
+                  </Link>
+                </Button>
+              ) : isAuthenticated ? (
+                <div className="flex flex-col space-y-2">
+                  <div className="text-xs text-white/80 text-center px-2">
+                    <div>Not your profile</div>
+                    <div className="font-mono text-[10px] mt-1 opacity-60">
+                      {account?.accountAddress.toString().slice(0, 8)}...{account?.accountAddress.toString().slice(-6)}
+                    </div>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="secondary" 
+                    className="bg-white/10 hover:bg-white/20 text-white/60 border-white/20 cursor-not-allowed"
+                    disabled
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Profile
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  size="sm" 
+                  variant="secondary" 
+                  className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                  onClick={() => setShowAccountSwitcher(true)}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Sign In to Edit
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -113,30 +194,32 @@ export default function RestaurantPage({ params }: RestaurantPageProps) {
           </motion.div>
 
           {/* Hours Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Clock className="w-5 h-5 mr-2" />
-                  Hours
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {Object.entries(restaurant.hours).map(([day, hours]) => (
-                    <div key={day} className="flex justify-between">
-                      <span className="font-medium">{day}</span>
-                      <span className="text-gray-600">{hours}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+          {restaurant.hours && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Clock className="w-5 h-5 mr-2" />
+                    Hours
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {Object.entries(restaurant.hours).map(([day, hours]) => (
+                      <div key={day} className="flex justify-between">
+                        <span className="font-medium">{day}</span>
+                        <span className="text-gray-600">{hours}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
         </div>
 
         {/* Sidebar */}
@@ -154,10 +237,10 @@ export default function RestaurantPage({ params }: RestaurantPageProps) {
               <CardContent className="space-y-4">
                 <div className="text-center">
                   <div className="text-3xl font-bold text-green-600 mb-1">
-                    {formatCurrency(restaurant.totalTips)}
+                    {formatCurrency(restaurant.totalTips || 0)}
                   </div>
                   <div className="text-sm text-gray-600">
-                    Total tips received from {restaurant.tipCount} supporters
+                    Total tips received from {restaurant.tipCount || 0} supporters
                   </div>
                 </div>
                 
@@ -224,6 +307,14 @@ export default function RestaurantPage({ params }: RestaurantPageProps) {
           </motion.div>
         </div>
       </div>
+      
+      {/* Account Switcher Modal */}
+      <AccountSwitcherModal
+        open={showAccountSwitcher}
+        onOpenChange={setShowAccountSwitcher}
+        currentWalletAddress={account?.accountAddress.toString()}
+        requiredWalletAddress={restaurant?.walletAddress}
+      />
     </div>
   )
 }

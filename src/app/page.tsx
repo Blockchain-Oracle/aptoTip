@@ -32,7 +32,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-2 text-white">
             <Award className="w-5 h-5" />
-            <span className="font-semibold">🏆 Built for Aptos Hackathon 2024</span>
+            <span className="font-semibold">🏆 Built for Aptos Hackathon 2025</span>
             <span className="hidden md:inline">• Showcasing Keyless Accounts & Sponsored Transactions</span>
             <Sparkles className="w-5 h-5" />
           </div>
@@ -52,6 +52,15 @@ export default function HomePage() {
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
                   Powered by Aptos Blockchain
                 </Badge>
+              </div>
+              
+              {/* Logo */}
+              <div className="flex justify-center mb-6">
+                <img 
+                  src="/image.png" 
+                  alt="AptoTip Logo" 
+                  className="w-32 h-32 object-contain"
+                />
               </div>
               
               <h1 className="text-5xl md:text-7xl font-bold mb-6">
@@ -178,7 +187,7 @@ export default function HomePage() {
                 step: "2", 
                 icon: <Heart className="w-8 h-8 text-purple-600" />,
                 title: "Share Your Link",
-                description: "Get a unique URL like tiplink.com/restaurants/your-name to share anywhere."
+                description: "Get a unique URL like aptotip.com/restaurants/your-name to share anywhere."
               },
               {
                 step: "3",
@@ -224,7 +233,7 @@ export default function HomePage() {
               Browse Profiles
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Discover restaurants and creators already using TipLink
+              Discover restaurants and creators already using AptoTip
             </p>
           </motion.div>
 

@@ -3,7 +3,7 @@ import { Network } from '@aptos-labs/ts-sdk';
 // Type for supported networks
 type SupportedNetwork = Network.MAINNET | Network.TESTNET | Network.DEVNET;
 
-// Network configuration for TipLink (only supported networks)
+// Network configuration for AptoTip (only supported networks)
 export const NETWORKS: Record<SupportedNetwork, {
   name: string;
   displayName: string;

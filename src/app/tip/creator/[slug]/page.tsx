@@ -1,11 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { notFound } from 'next/navigation'
-import { use } from 'react'
 import { 
   Users, 
   Heart, 
@@ -17,7 +16,10 @@ import {
   Globe,
   Shield,
   Play,
-  MessageCircle
+  MessageCircle,
+  Loader2,
+  LogIn,
+  AlertCircle
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -26,7 +28,10 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { getCreatorBySlug } from '@/lib/mock-data'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { useProfile, isCreator } from '@/hooks/useProfiles'
+import { useKeylessAccount } from '@/hooks/useKeylessAccount'
+import { tippingService } from '@/lib/contracts/tipping-service'
 import { formatCurrency, formatCompactNumber } from '@/lib/format'
 import { ROUTES } from '@/lib/constants'
 
@@ -41,19 +46,74 @@ const defaultTipAmounts = [500, 1000, 2000, 5000] // $5, $10, $20, $50
 
 export default function CreatorTipPage({ params }: CreatorTipPageProps) {
   const router = useRouter()
-  const { slug } = use(params)
-  const creator = getCreatorBySlug(slug)
+  const [slug, setSlug] = useState<string>('')
+  const [isLoadingParams, setIsLoadingParams] = useState(true)
+  
+  // Load params asynchronously
+  useEffect(() => {
+    const loadParams = async () => {
+      try {
+        const resolvedParams = await params
+        setSlug(resolvedParams.slug)
+      } catch (error) {
+        console.error('Failed to load params:', error)
+      } finally {
+        setIsLoadingParams(false)
+      }
+    }
+    
+    loadParams()
+  }, [params])
+  
+  const { data: profile, isLoading, error } = useProfile(slug)
+  const { account, isAuthenticated, isLoading: authLoading, createAuthSession, getAuthUrl } = useKeylessAccount()
 
   // State management
   const [selectedAmount, setSelectedAmount] = useState<number>(1000) // Default $10
   const [customAmount, setCustomAmount] = useState<string>('')
   const [message, setMessage] = useState<string>('')
   const [isProcessing, setIsProcessing] = useState(false)
-  const [showGoogleAuth, setShowGoogleAuth] = useState(false)
+  const [tipError, setTipError] = useState<string>('')
 
-  if (!creator) {
+  // Loading state for params or profile
+  if (isLoadingParams || isLoading || authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Loading creator...</h3>
+            <p className="text-gray-600">Getting ready for your tip</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">😞</div>
+            <h3 className="text-xl font-semibold mb-2">Failed to load creator</h3>
+            <p className="text-gray-600 mb-4">{error.message}</p>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Not found or not a creator
+  if (!profile || !isCreator(profile)) {
     notFound()
   }
+
+  const creator = profile
 
   const handleAmountSelect = (amount: number) => {
     setSelectedAmount(amount)
@@ -69,26 +129,43 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
   }
 
   const handleGoogleSignIn = async () => {
-    setShowGoogleAuth(true)
-    // Simulate Google OAuth flow
-    setTimeout(() => {
-      processTip()
-    }, 2000)
+    try {
+      setTipError('')
+      const ephemeralKeyPair = await createAuthSession()
+      const authUrl = getAuthUrl(ephemeralKeyPair)
+      window.location.href = authUrl
+    } catch (error) {
+      console.error('Login error:', error)
+      setTipError('Failed to start authentication. Please try again.')
+    }
   }
 
   const processTip = async () => {
+    if (!account || !profile) return
+    
     setIsProcessing(true)
+    setTipError('')
     
     try {
-      // Simulate tip processing (in real app, this would call Aptos smart contracts)
-      await new Promise(resolve => setTimeout(resolve, 3000))
+      // Convert amount from cents to APT (assuming 1 APT = $10 for demo)
+      const amountInAPT = selectedAmount / 1000 // $10 = 1 APT
+      
+      // Send tip using our TippingService
+      const txHash = await tippingService.sendTip(
+        account,
+        profile.walletAddress,
+        amountInAPT,
+        message || 'Thank you for your amazing content!'
+      )
+      
+      console.log('Tip sent successfully:', txHash)
       
       // Redirect to success page
-      router.push(`${ROUTES.TIP.CREATOR(slug)}/success?amount=${selectedAmount}&message=${encodeURIComponent(message)}`)
+      router.push(`${ROUTES.TIP.CREATOR(slug)}/success?amount=${selectedAmount}&message=${encodeURIComponent(message)}&txHash=${txHash}`)
     } catch (error) {
       console.error('Tip processing failed:', error)
+      setTipError('Failed to send tip. Please try again.')
       setIsProcessing(false)
-      setShowGoogleAuth(false)
     }
   }
 
@@ -124,7 +201,7 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Avatar className="w-16 h-16">
-                <AvatarImage src={creator.imageUrl} alt={creator.name} />
+                <AvatarImage src={creator.imageUrl || undefined} alt={creator.name} />
                 <AvatarFallback className="text-lg">
                   {creator.name.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
@@ -173,7 +250,7 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                      {creator.tags.map((tag) => (
+                      {(creator.tags || []).map((tag) => (
                         <Badge key={tag} variant="secondary" className="text-xs">
                           {tag}
                         </Badge>
@@ -183,18 +260,18 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
                     <div className="grid grid-cols-3 gap-4 text-center p-4 bg-gray-50 rounded-lg">
                       <div>
                         <div className="text-2xl font-bold text-purple-600">
-                          {formatCompactNumber(creator.followers)}
+                          {formatCompactNumber(creator.followers || 0)}
                         </div>
                         <div className="text-sm text-gray-600">Followers</div>
                       </div>
                       <div>
                         <div className="text-2xl font-bold text-green-600">
-                          {formatCurrency(creator.totalTips)}
+                          {formatCurrency(creator.totalTips || 0)}
                         </div>
                         <div className="text-sm text-gray-600">Total Tips</div>
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-blue-600">{creator.tipCount}</div>
+                        <div className="text-2xl font-bold text-blue-600">{creator.tipCount || 0}</div>
                         <div className="text-sm text-gray-600">Supporters</div>
                       </div>
                     </div>
@@ -215,7 +292,7 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-3">
-                    {Object.entries(creator.socialLinks).map(([platform, username]) => {
+                    {Object.entries(creator.socialLinks || {}).map(([platform, username]) => {
                       if (!username) return null
                       const Icon = getSocialIcon(platform)
                       return (
@@ -248,7 +325,7 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-3">
-                    {creator.portfolioImages.slice(0, 4).map((image, index) => (
+                    {(creator.portfolioImages || []).slice(0, 4).map((image, index) => (
                       <div key={index} className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer">
                         <Image
                           src={image}
@@ -266,41 +343,7 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
               </Card>
             </motion.div>
 
-            {/* Recent Tips */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg">
-                    <MessageCircle className="w-5 h-5 mr-2" />
-                    Recent Support
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {creator.recentTips.slice(0, 3).map((tip, index) => (
-                      <div key={index} className="flex items-start space-x-3 p-3 bg-purple-50 rounded-lg">
-                        <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                          {tip.anonymous ? '?' : tip.message[0]}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-semibold text-green-600 text-sm">
-                              {formatCurrency(tip.amount)}
-                            </span>
-                            <span className="text-xs text-gray-500">{tip.timestamp}</span>
-                          </div>
-                          <p className="text-sm text-gray-700">{tip.message}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+            {/* Recent Tips - Removed as it's not in the database schema */}
           </div>
 
           {/* Right Column - Tip Form */}
@@ -406,34 +449,37 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
                   </div>
 
                   {/* Sign In & Pay Button */}
-                  {!showGoogleAuth && !isProcessing && (
+                  {!isAuthenticated && !isProcessing && (
                     <Button
                       onClick={handleGoogleSignIn}
                       className="w-full h-14 text-lg bg-purple-600 hover:bg-purple-700"
                       size="lg"
                       disabled={selectedAmount < 100} // Minimum $1
                     >
-                      <CreditCard className="w-5 h-5 mr-2" />
+                      <LogIn className="w-5 h-5 mr-2" />
                       Sign in with Google & Send Tip
                     </Button>
                   )}
 
-                  {/* Google Auth Simulation */}
-                  {showGoogleAuth && !isProcessing && (
-                    <div className="p-4 border border-gray-200 rounded-lg bg-white">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
-                          <span className="text-white text-sm font-bold">G</span>
-                        </div>
-                        <div>
-                          <div className="font-medium">Google Sign-In</div>
-                          <div className="text-sm text-gray-600">Creating keyless account...</div>
-                        </div>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-purple-600 h-2 rounded-full w-1/2 animate-pulse"></div>
-                      </div>
-                    </div>
+                  {/* Send Tip Button (when authenticated) */}
+                  {isAuthenticated && !isProcessing && (
+                    <Button
+                      onClick={processTip}
+                      className="w-full h-14 text-lg bg-green-600 hover:bg-green-700"
+                      size="lg"
+                      disabled={selectedAmount < 100} // Minimum $1
+                    >
+                      <CreditCard className="w-5 h-5 mr-2" />
+                      Send Tip ({formatAmountDisplay(selectedAmount)})
+                    </Button>
+                  )}
+
+                  {/* Tip Error */}
+                  {tipError && (
+                    <Alert variant="destructive" className="mt-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{tipError}</AlertDescription>
+                    </Alert>
                   )}
 
                   {/* Processing */}

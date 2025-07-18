@@ -6,7 +6,6 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api'
 import { notFound } from 'next/navigation'
-import { use } from 'react'
 import { 
   MapPin, 
   Star, 
@@ -19,7 +18,9 @@ import {
   AlertCircle,
   Navigation,
   Clock,
-  Users
+  Users,
+  Loader2,
+  LogIn
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -29,7 +30,9 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { getRestaurantBySlug } from '@/lib/mock-data'
+import { useProfile, isRestaurant } from '@/hooks/useProfiles'
+import { useKeylessAccount } from '@/hooks/useKeylessAccount'
+import { tippingService } from '@/lib/contracts/tipping-service'
 import { formatCurrency } from '@/lib/format'
 import { ROUTES } from '@/lib/constants'
 
@@ -50,8 +53,27 @@ const defaultTipAmounts = [500, 1000, 2000, 5000] // $5, $10, $20, $50
 export default function TipPage({ params }: TipPageProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { slug } = use(params)
-  const restaurant = getRestaurantBySlug(slug)
+  const [slug, setSlug] = useState<string>('')
+  const [isLoadingParams, setIsLoadingParams] = useState(true)
+  
+  // Load params asynchronously
+  useEffect(() => {
+    const loadParams = async () => {
+      try {
+        const resolvedParams = await params
+        setSlug(resolvedParams.slug)
+      } catch (error) {
+        console.error('Failed to load params:', error)
+      } finally {
+        setIsLoadingParams(false)
+      }
+    }
+    
+    loadParams()
+  }, [params])
+  
+  const { data: profile, isLoading, error } = useProfile(slug)
+  const { account, isAuthenticated, isLoading: authLoading, createAuthSession, getAuthUrl } = useKeylessAccount()
 
   // Google Maps setup
   const { isLoaded } = useJsApiLoader({
@@ -67,7 +89,7 @@ export default function TipPage({ params }: TipPageProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null)
   const [locationVerified, setLocationVerified] = useState<boolean | null>(null)
-  const [showGoogleAuth, setShowGoogleAuth] = useState(false)
+  const [tipError, setTipError] = useState<string>('')
 
   // Mock restaurant coordinates (in real app, these would come from the database)
   const restaurantLocation = {
@@ -100,10 +122,6 @@ export default function TipPage({ params }: TipPageProps) {
     }
   }, [])
 
-  if (!restaurant) {
-    notFound()
-  }
-
   const calculateDistance = (pos1: {lat: number, lng: number}, pos2: {lat: number, lng: number}) => {
     const R = 6371e3 // Earth's radius in meters
     const φ1 = pos1.lat * Math.PI/180
@@ -133,32 +151,89 @@ export default function TipPage({ params }: TipPageProps) {
   }
 
   const handleGoogleSignIn = async () => {
-    setShowGoogleAuth(true)
-    // Simulate Google OAuth flow
-    setTimeout(() => {
-      processTip()
-    }, 2000)
+    try {
+      setTipError('')
+      const ephemeralKeyPair = await createAuthSession()
+      const authUrl = getAuthUrl(ephemeralKeyPair)
+      window.location.href = authUrl
+    } catch (error) {
+      console.error('Login error:', error)
+      setTipError('Failed to start authentication. Please try again.')
+    }
   }
 
   const processTip = async () => {
+    if (!account || !profile) return
+    
     setIsProcessing(true)
+    setTipError('')
     
     try {
-      // Simulate tip processing (in real app, this would call Aptos smart contracts)
-      await new Promise(resolve => setTimeout(resolve, 3000))
+      // Convert amount from cents to APT (assuming 1 APT = $10 for demo)
+      const amountInAPT = selectedAmount / 1000 // $10 = 1 APT
+      
+      // Send tip using our TippingService
+      const txHash = await tippingService.sendTip(
+        account,
+        profile.walletAddress,
+        amountInAPT,
+        message || 'Thank you for the great service!'
+      )
+      
+      console.log('Tip sent successfully:', txHash)
       
       // Redirect to success page
-      router.push(`${ROUTES.TIP.SUCCESS(slug)}?amount=${selectedAmount}&message=${encodeURIComponent(message)}`)
+      router.push(`${ROUTES.TIP.SUCCESS(slug)}?amount=${selectedAmount}&message=${encodeURIComponent(message)}&txHash=${txHash}`)
     } catch (error) {
       console.error('Tip processing failed:', error)
+      setTipError('Failed to send tip. Please try again.')
       setIsProcessing(false)
-      setShowGoogleAuth(false)
     }
   }
 
   const formatAmountDisplay = (cents: number) => {
     return formatCurrency(cents)
   }
+
+  // Loading state for params or profile
+  if (isLoadingParams || isLoading || authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Loading restaurant...</h3>
+            <p className="text-gray-600">Getting ready for your tip</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">😞</div>
+            <h3 className="text-xl font-semibold mb-2">Failed to load restaurant</h3>
+            <p className="text-gray-600 mb-4">{error.message}</p>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Not found or not a restaurant
+  if (!profile || !isRestaurant(profile)) {
+    notFound()
+  }
+
+  const restaurant = profile
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -169,7 +244,7 @@ export default function TipPage({ params }: TipPageProps) {
             <div className="flex items-center space-x-3">
               <div className="relative w-12 h-12 rounded-lg overflow-hidden">
                 <Image
-                  src={restaurant.imageUrl}
+                  src={restaurant.imageUrl || '/placeholder-restaurant.jpg'}
                   alt={restaurant.name}
                   fill
                   className="object-cover"
@@ -199,9 +274,9 @@ export default function TipPage({ params }: TipPageProps) {
                     Location Verified
                   </Badge>
                 ) : (
-                  <Badge variant="outline" className="border-orange-500 text-orange-600">
+                  <Badge variant="outline" className="border-yellow-500 text-yellow-700">
                     <AlertCircle className="w-3 h-3 mr-1" />
-                    Location Unverified
+                    Location Mismatch
                   </Badge>
                 )}
               </div>
@@ -226,11 +301,11 @@ export default function TipPage({ params }: TipPageProps) {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <Star className="w-5 h-5 text-yellow-500 fill-current" />
-                        <span className="font-semibold">{(restaurant.averageTip / 100).toFixed(1)}</span>
-                        <span className="text-gray-600">({restaurant.tipCount} tips)</span>
+                        <span className="font-semibold">{((restaurant.averageTip || 0) / 100).toFixed(1)}</span>
+                        <span className="text-gray-600">({restaurant.tipCount || 0} tips)</span>
                       </div>
                       <div className="flex flex-wrap gap-1">
-                        {restaurant.tags.slice(0, 3).map((tag) => (
+                        {restaurant.tags?.slice(0, 3).map((tag) => (
                           <Badge key={tag} variant="secondary" className="text-xs">
                             {tag}
                           </Badge>
@@ -269,7 +344,7 @@ export default function TipPage({ params }: TipPageProps) {
 
                       <div className="flex items-center space-x-2">
                         <Users className="w-4 h-4 text-gray-400" />
-                        <span>{restaurant.tipCount} supporters</span>
+                        <span>{restaurant.tipCount || 0} supporters</span>
                       </div>
                     </div>
                   </div>
@@ -443,6 +518,16 @@ export default function TipPage({ params }: TipPageProps) {
                     </Alert>
                   )}
 
+                  {/* Error Display */}
+                  {tipError && (
+                    <Alert className="border-red-200 bg-red-50">
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                      <AlertDescription className="text-red-700">
+                        {tipError}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   {/* Summary */}
                   <div className="p-4 bg-white rounded-lg border border-blue-200">
                     <div className="flex items-center justify-between text-lg font-semibold">
@@ -455,34 +540,29 @@ export default function TipPage({ params }: TipPageProps) {
                   </div>
 
                   {/* Sign In & Pay Button */}
-                  {!showGoogleAuth && !isProcessing && (
+                  {!isAuthenticated && !isProcessing && (
                     <Button
                       onClick={handleGoogleSignIn}
                       className="w-full h-14 text-lg bg-blue-600 hover:bg-blue-700"
                       size="lg"
                       disabled={selectedAmount < 100} // Minimum $1
                     >
-                      <CreditCard className="w-5 h-5 mr-2" />
+                      <LogIn className="w-5 h-5 mr-2" />
                       Sign in with Google & Send Tip
                     </Button>
                   )}
 
-                  {/* Google Auth Simulation */}
-                  {showGoogleAuth && !isProcessing && (
-                    <div className="p-4 border border-gray-200 rounded-lg bg-white">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                          <span className="text-white text-sm font-bold">G</span>
-                        </div>
-                        <div>
-                          <div className="font-medium">Google Sign-In</div>
-                          <div className="text-sm text-gray-600">Creating keyless account...</div>
-                        </div>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-blue-600 h-2 rounded-full w-1/2 animate-pulse"></div>
-                      </div>
-                    </div>
+                  {/* Send Tip Button (when authenticated) */}
+                  {isAuthenticated && !isProcessing && (
+                    <Button
+                      onClick={processTip}
+                      className="w-full h-14 text-lg bg-green-600 hover:bg-green-700"
+                      size="lg"
+                      disabled={selectedAmount < 100} // Minimum $1
+                    >
+                      <CreditCard className="w-5 h-5 mr-2" />
+                      Send Tip ({formatAmountDisplay(selectedAmount)})
+                    </Button>
                   )}
 
                   {/* Processing */}

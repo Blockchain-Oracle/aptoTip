@@ -25,6 +25,15 @@ export interface ProfileWithDetails extends Profile {
   blockchainTxHash?: string;
 }
 
+export interface ProfilesResponse {
+  profiles: ProfileWithDetails[];
+  pagination: {
+    limit: number;
+    offset: number;
+    total: number;
+  };
+}
+
 // Fetch all profiles
 export function useProfiles(options?: {
   category?: 'restaurant' | 'creator';
@@ -34,14 +43,15 @@ export function useProfiles(options?: {
     queryKey: ['profiles', options],
     queryFn: async (): Promise<ProfileWithDetails[]> => {
       const params = new URLSearchParams();
-      if (options?.category) params.append('category', options.category);
+      if (options?.category) params.append('type', options.category);
       if (options?.limit) params.append('limit', options.limit.toString());
       
       const response = await fetch(`/api/profiles?${params.toString()}`);
       if (!response.ok) {
         throw new Error('Failed to fetch profiles');
       }
-      return response.json();
+      const data: ProfilesResponse = await response.json();
+      return data.profiles;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -89,7 +99,8 @@ export function useRestaurantsByLocation(city?: string, state?: string, limit?: 
       if (!response.ok) {
         throw new Error('Failed to fetch restaurants');
       }
-      return response.json();
+      const data: ProfilesResponse = await response.json();
+      return data.profiles;
     },
     enabled: !!(city || state),
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -110,7 +121,8 @@ export function useCreatorsByTag(tag?: string, limit?: number) {
       if (!response.ok) {
         throw new Error('Failed to fetch creators');
       }
-      return response.json();
+      const data: ProfilesResponse = await response.json();
+      return data.profiles;
     },
     enabled: !!tag,
     staleTime: 5 * 60 * 1000, // 5 minutes

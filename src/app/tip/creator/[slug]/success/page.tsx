@@ -23,7 +23,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { getCreatorBySlug } from '@/lib/mock-data'
+import { useProfile, isCreator } from '@/hooks/useProfiles'
 import { formatCurrency, formatCompactNumber } from '@/lib/format'
 import { ROUTES } from '@/lib/constants'
 
@@ -37,7 +37,7 @@ export default function SuccessPage({ params }: SuccessPageProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { slug } = use(params)
-  const creator = getCreatorBySlug(slug)
+  const { data: creator, isLoading, error } = useProfile(slug)
 
   const [showCelebration, setShowCelebration] = useState(true)
   const [copied, setCopied] = useState(false)
@@ -45,8 +45,22 @@ export default function SuccessPage({ params }: SuccessPageProps) {
   const tipAmount = parseInt(searchParams.get('amount') || '1000')
   const tipMessage = searchParams.get('message') || ''
 
-  // Mock transaction hash
-  const transactionHash = '0x' + Math.random().toString(16).substr(2, 64)
+  // Get real transaction hash from URL parameters
+  const transactionHash = searchParams.get('txHash') || ''
+
+  // Get the correct explorer URL based on network
+  const getExplorerUrl = (hash: string) => {
+    const network = process.env.NEXT_PUBLIC_APTOS_NETWORK || 'devnet'
+    const baseUrl = 'https://explorer.aptoslabs.com'
+    
+    // For mainnet, we don't need the network parameter
+    if (network === 'mainnet') {
+      return `${baseUrl}/txn/${hash}`
+    }
+    
+    // For testnet and devnet, we include the network parameter
+    return `${baseUrl}/txn/${hash}?network=${network}`
+  }
 
   useEffect(() => {
     // Hide celebration animation after 3 seconds
@@ -57,11 +71,23 @@ export default function SuccessPage({ params }: SuccessPageProps) {
     return () => clearTimeout(timer)
   }, [])
 
-  if (!creator) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !creator || !isCreator(creator)) {
     notFound()
   }
 
   const handleCopyTransaction = async () => {
+    if (!transactionHash) return
     await navigator.clipboard.writeText(transactionHash)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -70,7 +96,7 @@ export default function SuccessPage({ params }: SuccessPageProps) {
   const handleShare = async () => {
     const shareData = {
       title: `I just supported ${creator.name}!`,
-      text: `Just sent ${formatCurrency(tipAmount)} to ${creator.name} using TipLink! Supporting amazing creators 💜`,
+      text: `Just sent ${formatCurrency(tipAmount)} to ${creator.name} using AptoTip! Supporting amazing creators 💜`,
       url: window.location.href
     }
 
@@ -161,9 +187,9 @@ export default function SuccessPage({ params }: SuccessPageProps) {
                 {/* Creator Info */}
                 <div className="flex items-center space-x-4 p-4 bg-white rounded-lg">
                   <Avatar className="w-16 h-16">
-                    <AvatarImage src={creator.imageUrl} alt={creator.name} />
+                    <AvatarImage src={creator.imageUrl || undefined} alt={creator.name} />
                     <AvatarFallback className="text-lg">
-                      {creator.name.split(' ').map(n => n[0]).join('')}
+                      {creator.name.split(' ').map((n: string) => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
@@ -202,7 +228,7 @@ export default function SuccessPage({ params }: SuccessPageProps) {
                   
                   <div className="flex items-center justify-between text-sm text-gray-600">
                     <span>Network:</span>
-                    <span>Aptos Blockchain</span>
+                    <span className="font-medium capitalize">{process.env.NEXT_PUBLIC_APTOS_NETWORK || 'devnet'}</span>
                   </div>
                   
                   <hr className="border-purple-200" />
@@ -224,30 +250,36 @@ export default function SuccessPage({ params }: SuccessPageProps) {
                 {/* Transaction Hash */}
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="text-sm font-medium text-gray-900 mb-2">Transaction Hash:</div>
-                  <div className="flex items-center space-x-2">
-                    <code className="text-xs text-gray-600 bg-white px-2 py-1 rounded flex-1 overflow-hidden">
-                      {transactionHash.slice(0, 16)}...{transactionHash.slice(-8)}
-                    </code>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCopyTransaction}
-                      disabled={copied}
-                    >
-                      {copied ? (
-                        <CheckCircle className="w-4 h-4" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(`https://explorer.aptoslabs.com/txn/${transactionHash}`, '_blank')}
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  {transactionHash ? (
+                    <div className="flex items-center space-x-2">
+                      <code className="text-xs text-gray-600 bg-white px-2 py-1 rounded flex-1 overflow-hidden">
+                        {transactionHash.slice(0, 16)}...{transactionHash.slice(-8)}
+                      </code>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCopyTransaction}
+                        disabled={copied}
+                      >
+                        {copied ? (
+                          <CheckCircle className="w-4 h-4" />
+                        ) : (
+                          <Copy className="w-4 h-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(getExplorerUrl(transactionHash), '_blank')}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500 italic">
+                      Transaction hash not available
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -276,7 +308,7 @@ export default function SuccessPage({ params }: SuccessPageProps) {
                   <Button
                     variant="outline"
                     onClick={() => {
-                      const tweetText = `Just supported ${creator.name} with ${formatCurrency(tipAmount)} using @TipLink! Supporting amazing creators has never been easier 💜 #AptosHackathon`
+                      const tweetText = `Just supported ${creator.name} with ${formatCurrency(tipAmount)} using @AptoTip! Supporting amazing creators has never been easier 💜 #AptosHackathon`
                       window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`, '_blank')
                     }}
                     className="h-12"

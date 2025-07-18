@@ -18,7 +18,9 @@ import {
   AlertCircle,
   Sparkles,
   Wallet,
-  Camera
+  Camera,
+  Loader2,
+  X
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -29,7 +31,12 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CreateProfileButton } from '@/components/blockchain/CreateProfileButton'
+import { UploadButton } from '@/components/ui/upload-button'
+import { useKeylessAccount } from '@/hooks/useKeylessAccount'
+import { useCreateProfile } from '@/hooks/useCreateProfile'
 import { ROUTES } from '@/lib/constants'
+import { toast } from 'sonner'
 
 const restaurantCategories = [
   "Pizza", "Italian", "Sushi", "Japanese", "Healthy", "Organic", 
@@ -47,11 +54,11 @@ const states = [
 
 export default function CreateRestaurantPage() {
   const router = useRouter()
+  const { account, isAuthenticated } = useKeylessAccount()
+  const createProfile = useCreateProfile()
   const [step, setStep] = useState(1)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
-    walletAddress: '',
     bio: '',
     address: '',
     city: '',
@@ -61,7 +68,8 @@ export default function CreateRestaurantPage() {
     category: '',
     tags: [] as string[],
     imageUrl: '',
-    bannerUrl: ''
+    bannerUrl: '',
+    hours: {} as Record<string, string>
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -82,14 +90,37 @@ export default function CreateRestaurantPage() {
     }))
   }
 
+  const handleImageUpload = (type: 'profile' | 'banner') => (url: string) => {
+    if (type === 'profile') {
+      setFormData(prev => ({ ...prev, imageUrl: url }))
+    } else if (type === 'banner') {
+      setFormData(prev => ({ ...prev, bannerUrl: url }))
+    }
+  }
+
+  const handleUploadError = (error: string) => {
+    toast.error('Upload failed', { description: error })
+  }
+
+  const handleHoursChange = (day: string, hours: string) => {
+    setFormData(prev => ({
+      ...prev,
+      hours: {
+        ...prev.hours,
+        [day]: hours
+      }
+    }))
+  }
+
   const validateStep = (currentStep: number) => {
     const newErrors: Record<string, string> = {}
 
     if (currentStep === 1) {
       if (!formData.name.trim()) newErrors.name = 'Restaurant name is required'
-      if (!formData.walletAddress.trim()) newErrors.walletAddress = 'Wallet address is required'
       if (!formData.bio.trim()) newErrors.bio = 'Bio is required'
       if (formData.bio.length < 50) newErrors.bio = 'Bio must be at least 50 characters'
+      if (!formData.imageUrl) newErrors.imageUrl = 'Profile image is required'
+      if (!formData.bannerUrl) newErrors.bannerUrl = 'Banner image is required'
     }
 
     if (currentStep === 2) {
@@ -116,27 +147,34 @@ export default function CreateRestaurantPage() {
     setStep(step - 1)
   }
 
-  const handleSubmit = async () => {
-    if (!validateStep(step)) return
+  const handleCreateProfile = async () => {
+    if (!validateStep(step) || !isAuthenticated || !account) return
 
-    setIsSubmitting(true)
-    
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Generate slug from name
-      const slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-      
-      // Redirect to success or profile page
-      router.push(`/restaurants/${slug}`)
-    } catch (error) {
-      console.error('Error creating profile:', error)
-      setIsSubmitting(false)
+    const profileData = {
+      walletAddress: account.accountAddress.toString(),
+      profileType: 'restaurant' as const,
+      ...formData,
     }
+
+    createProfile.mutate(profileData)
   }
 
-  const progress = (step / 3) * 100
+  const progress = (step / 4) * 100
+
+  // Show loading state if not connected
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Connecting to your account...</h3>
+            <p className="text-gray-600">Please wait while we set up your keyless account</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -168,7 +206,7 @@ export default function CreateRestaurantPage() {
             className="mb-8"
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Step {step} of 3</span>
+              <span className="text-sm font-medium text-gray-700">Step {step} of 4</span>
               <span className="text-sm text-gray-500">{Math.round(progress)}% Complete</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
@@ -200,87 +238,109 @@ export default function CreateRestaurantPage() {
                 </CardHeader>
                 
                 <CardContent className="space-y-6">
-                  {/* Restaurant Name */}
                   <div>
                     <Label htmlFor="name">Restaurant Name *</Label>
                     <Input
                       id="name"
+                      placeholder="e.g., Mario's Authentic Pizza"
                       value={formData.name}
                       onChange={(e) => handleInputChange('name', e.target.value)}
-                      placeholder="e.g., Mario's Authentic Pizza"
                       className={errors.name ? 'border-red-500' : ''}
                     />
-                    {errors.name && (
-                      <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-                    )}
+                    {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
                   </div>
 
-                  {/* Wallet Address */}
-                  <div>
-                    <Label htmlFor="walletAddress">Aptos Wallet Address *</Label>
-                    <div className="relative">
-                      <Input
-                        id="walletAddress"
-                        value={formData.walletAddress}
-                        onChange={(e) => handleInputChange('walletAddress', e.target.value)}
-                        placeholder="0x..."
-                        className={errors.walletAddress ? 'border-red-500' : ''}
-                      />
-                      <Wallet className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    </div>
-                    {errors.walletAddress && (
-                      <p className="text-red-500 text-sm mt-1">{errors.walletAddress}</p>
-                    )}
-                    <p className="text-gray-500 text-sm mt-1">
-                      This is where you'll receive tips. Make sure it's correct!
-                    </p>
-                  </div>
-
-                  {/* Bio */}
                   <div>
                     <Label htmlFor="bio">Restaurant Bio *</Label>
                     <Textarea
                       id="bio"
+                      placeholder="Describe your restaurant, cuisine, atmosphere, and what makes you special..."
                       value={formData.bio}
                       onChange={(e) => handleInputChange('bio', e.target.value)}
-                      placeholder="Tell customers about your restaurant, your story, what makes you special..."
                       rows={4}
                       className={errors.bio ? 'border-red-500' : ''}
                     />
-                    {errors.bio && (
-                      <p className="text-red-500 text-sm mt-1">{errors.bio}</p>
+                    <div className="flex justify-between text-sm text-gray-500 mt-1">
+                      <span>{formData.bio.length}/500 characters</span>
+                      <span>Minimum 50 characters</span>
+                    </div>
+                    {errors.bio && <p className="text-red-500 text-sm mt-1">{errors.bio}</p>}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="category">Primary Category</Label>
+                    <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {restaurantCategories.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Profile Image */}
+                  <div>
+                    <Label>Profile Image *</Label>
+                    {formData.imageUrl ? (
+                      <div className="relative inline-block">
+                        <img
+                          src={formData.imageUrl}
+                          alt="Profile"
+                          className="w-32 h-32 rounded-full object-cover border-2 border-blue-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <UploadButton
+                        endpoint="profileImage"
+                        onUploadComplete={handleImageUpload('profile')}
+                        onUploadError={handleUploadError}
+                      >
+                        Upload Profile Image
+                      </UploadButton>
                     )}
-                    <p className="text-gray-500 text-sm mt-1">
-                      {formData.bio.length}/500 characters
-                    </p>
+                    {errors.imageUrl && <p className="text-red-500 text-sm mt-1">{errors.imageUrl}</p>}
                   </div>
 
-                  {/* Website */}
+                  {/* Banner Image */}
                   <div>
-                    <Label htmlFor="website">Website (Optional)</Label>
-                    <div className="relative">
-                      <Input
-                        id="website"
-                        value={formData.website}
-                        onChange={(e) => handleInputChange('website', e.target.value)}
-                        placeholder="https://yourrestaurant.com"
-                      />
-                      <Globe className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    </div>
-                  </div>
-
-                  {/* Phone */}
-                  <div>
-                    <Label htmlFor="phone">Phone Number (Optional)</Label>
-                    <div className="relative">
-                      <Input
-                        id="phone"
-                        value={formData.phone}
-                        onChange={(e) => handleInputChange('phone', e.target.value)}
-                        placeholder="(555) 123-4567"
-                      />
-                      <Phone className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    </div>
+                    <Label>Banner Image *</Label>
+                    {formData.bannerUrl ? (
+                      <div className="relative">
+                        <img
+                          src={formData.bannerUrl}
+                          alt="Banner"
+                          className="w-full h-32 rounded-lg object-cover border-2 border-blue-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, bannerUrl: '' }))}
+                          className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <UploadButton
+                        endpoint="bannerImage"
+                        onUploadComplete={handleImageUpload('banner')}
+                        onUploadError={handleUploadError}
+                      >
+                        Upload Banner Image
+                      </UploadButton>
+                    )}
+                    {errors.bannerUrl && <p className="text-red-500 text-sm mt-1">{errors.bannerUrl}</p>}
                   </div>
                 </CardContent>
               </Card>
@@ -293,42 +353,35 @@ export default function CreateRestaurantPage() {
                     <MapPin className="w-8 h-8 text-green-600" />
                   </div>
                   <CardTitle className="text-2xl">Location & Contact</CardTitle>
-                  <p className="text-gray-600">Help customers find you</p>
+                  <p className="text-gray-600">Help customers find your restaurant</p>
                 </CardHeader>
                 
                 <CardContent className="space-y-6">
-                  {/* Address */}
                   <div>
                     <Label htmlFor="address">Street Address *</Label>
                     <Input
                       id="address"
+                      placeholder="e.g., 123 Main Street"
                       value={formData.address}
                       onChange={(e) => handleInputChange('address', e.target.value)}
-                      placeholder="123 Main Street"
                       className={errors.address ? 'border-red-500' : ''}
                     />
-                    {errors.address && (
-                      <p className="text-red-500 text-sm mt-1">{errors.address}</p>
-                    )}
+                    {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    {/* City */}
                     <div>
                       <Label htmlFor="city">City *</Label>
                       <Input
                         id="city"
+                        placeholder="e.g., New York"
                         value={formData.city}
                         onChange={(e) => handleInputChange('city', e.target.value)}
-                        placeholder="New York"
                         className={errors.city ? 'border-red-500' : ''}
                       />
-                      {errors.city && (
-                        <p className="text-red-500 text-sm mt-1">{errors.city}</p>
-                      )}
+                      {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
                     </div>
 
-                    {/* State */}
                     <div>
                       <Label htmlFor="state">State *</Label>
                       <Select value={formData.state} onValueChange={(value) => handleInputChange('state', value)}>
@@ -343,18 +396,31 @@ export default function CreateRestaurantPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                      {errors.state && (
-                        <p className="text-red-500 text-sm mt-1">{errors.state}</p>
-                      )}
+                      {errors.state && <p className="text-red-500 text-sm mt-1">{errors.state}</p>}
                     </div>
                   </div>
 
-                  <Alert>
-                    <MapPin className="h-4 w-4" />
-                    <AlertDescription>
-                      Your location helps customers find you and verify they're at the right place when tipping.
-                    </AlertDescription>
-                  </Alert>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input
+                        id="phone"
+                        placeholder="e.g., (555) 123-4567"
+                        value={formData.phone}
+                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="website">Website</Label>
+                      <Input
+                        id="website"
+                        placeholder="e.g., https://mariospizza.com"
+                        value={formData.website}
+                        onChange={(e) => handleInputChange('website', e.target.value)}
+                      />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -363,101 +429,101 @@ export default function CreateRestaurantPage() {
               <Card className="border-0 shadow-xl">
                 <CardHeader className="text-center">
                   <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Tag className="w-8 h-8 text-purple-600" />
+                    <Clock className="w-8 h-8 text-purple-600" />
                   </div>
-                  <CardTitle className="text-2xl">Categories & Images</CardTitle>
-                  <p className="text-gray-600">Help customers discover you</p>
+                  <CardTitle className="text-2xl">Business Hours</CardTitle>
+                  <p className="text-gray-600">Set your restaurant's operating hours</p>
                 </CardHeader>
                 
                 <CardContent className="space-y-6">
-                  {/* Categories */}
+                  <div className="space-y-4">
+                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                      <div key={day} className="flex items-center space-x-4">
+                        <div className="w-24 font-medium">{day}</div>
+                        <Input
+                          placeholder="e.g., 11:00 AM - 10:00 PM or Closed"
+                          value={formData.hours[day] || ''}
+                          onChange={(e) => handleHoursChange(day, e.target.value)}
+                          className="flex-1"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {step === 4 && (
+              <Card className="border-0 shadow-xl">
+                <CardHeader className="text-center">
+                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Tag className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <CardTitle className="text-2xl">Categories & Tags</CardTitle>
+                  <p className="text-gray-600">Help customers discover your restaurant</p>
+                </CardHeader>
+                
+                <CardContent className="space-y-6">
                   <div>
-                    <Label>Restaurant Categories *</Label>
-                    <p className="text-sm text-gray-600 mb-3">Select all that apply to your restaurant</p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {restaurantCategories.map((category) => (
+                    <Label>Select Categories *</Label>
+                    <p className="text-sm text-gray-600 mb-4">Choose categories that describe your restaurant</p>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      {restaurantCategories.map((tag) => (
                         <Button
-                          key={category}
-                          variant={formData.tags.includes(category) ? "default" : "outline"}
+                          key={tag}
+                          type="button"
+                          variant={formData.tags.includes(tag) ? "default" : "outline"}
                           size="sm"
-                          onClick={() => handleTagToggle(category)}
+                          onClick={() => handleTagToggle(tag)}
                           className="justify-start"
                         >
-                          {formData.tags.includes(category) && (
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                          )}
-                          {category}
+                          {formData.tags.includes(tag) && <CheckCircle className="w-4 h-4 mr-2" />}
+                          {tag}
                         </Button>
                       ))}
                     </div>
-                    {errors.tags && (
-                      <p className="text-red-500 text-sm mt-1">{errors.tags}</p>
-                    )}
+                    {errors.tags && <p className="text-red-500 text-sm mt-2">{errors.tags}</p>}
                   </div>
 
-                  {/* Image Upload Placeholder */}
-                  <div>
-                    <Label>Restaurant Images (Optional)</Label>
-                    <p className="text-sm text-gray-600 mb-3">Add photos to make your profile stand out</p>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-                      <Camera className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600 mb-2">Upload restaurant photos</p>
-                      <p className="text-sm text-gray-500">Coming soon - for now, we'll use placeholder images</p>
-                    </div>
+                  {/* Profile Creation Section */}
+                  <div className="pt-6 border-t">
+                    <CreateProfileButton
+                      profileType="restaurant"
+                      walletAddress={account?.accountAddress.toString() || ''}
+                      profileData={formData}
+                      onSuccess={(txHash) => {
+                        console.log('Profile created with transaction:', txHash);
+                      }}
+                      onError={(error) => {
+                        console.error('Profile creation failed:', error);
+                      }}
+                    />
                   </div>
-
-                  <Alert>
-                    <Sparkles className="h-4 w-4" />
-                    <AlertDescription>
-                      Great! You're almost done. Review your information and create your profile.
-                    </AlertDescription>
-                  </Alert>
                 </CardContent>
               </Card>
             )}
           </motion.div>
 
           {/* Navigation Buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex justify-between mt-8"
-          >
-            {step > 1 ? (
-              <Button variant="outline" onClick={handleBack}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
+          {step < 4 && (
+            <div className="flex justify-between mt-8">
+              <Button
+                variant="outline"
+                onClick={handleBack}
+                disabled={step === 1}
+              >
                 Back
               </Button>
-            ) : (
-              <div></div>
-            )}
-
-            {step < 3 ? (
-              <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700">
-                Next Step
-                <ArrowLeft className="w-4 h-4 ml-2 rotate-180" />
-              </Button>
-            ) : (
-              <Button 
-                onClick={handleSubmit} 
-                disabled={isSubmitting}
-                className="bg-green-600 hover:bg-green-700"
+              
+              <Button
+                onClick={handleNext}
+                className="bg-blue-600 hover:bg-blue-700"
               >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Creating Profile...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Create Profile
-                  </>
-                )}
+                Next Step
               </Button>
-            )}
-          </motion.div>
+            </div>
+          )}
         </div>
       </div>
     </div>

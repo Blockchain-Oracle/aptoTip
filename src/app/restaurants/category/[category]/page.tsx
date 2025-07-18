@@ -10,7 +10,7 @@ import { MapPin, Star, Users, Heart, ChevronRight, Home, Shield } from 'lucide-r
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { getRestaurantsByCategory, type Restaurant } from '@/lib/mock-data'
+import { useProfiles, isRestaurant } from '@/hooks/useProfiles'
 import { formatCurrency, formatCompactNumber } from '@/lib/format'
 
 interface RestaurantCategoryPageProps {
@@ -67,7 +67,8 @@ const categoryInfo = {
 
 export default function RestaurantCategoryPage({ params }: RestaurantCategoryPageProps) {
   const { category } = use(params)
-  const restaurants = getRestaurantsByCategory(category)
+  const { data: allProfiles, isLoading, error } = useProfiles({ category: 'restaurant' })
+  const restaurants = allProfiles?.filter(profile => isRestaurant(profile) && profile.category === category) || []
   const info = categoryInfo[category as keyof typeof categoryInfo]
 
   // If category doesn't exist, show helpful alternatives
@@ -208,7 +209,7 @@ export default function RestaurantCategoryPage({ params }: RestaurantCategoryPag
           <div className="text-6xl mb-4">🔍</div>
           <h3 className="text-xl font-semibold mb-2">No {info.title.toLowerCase()} restaurants yet</h3>
           <p className="text-gray-600 mb-6">
-            Be the first to add a {info.title.toLowerCase()} restaurant to TipLink!
+            Be the first to add a {info.title.toLowerCase()} restaurant to AptoTip!
           </p>
           <Button asChild size="lg">
             <Link href="/signup/restaurant">Join as Restaurant</Link>
@@ -226,7 +227,7 @@ export default function RestaurantCategoryPage({ params }: RestaurantCategoryPag
         >
           <h3 className="text-2xl font-bold mb-4">Own a {info.title.toLowerCase()} restaurant?</h3>
           <p className="text-gray-600 mb-6">
-            Join TipLink and start receiving tips with zero setup fees
+            Join AptoTip and start receiving tips with zero setup fees
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg">
@@ -242,7 +243,7 @@ export default function RestaurantCategoryPage({ params }: RestaurantCategoryPag
   )
 }
 
-function RestaurantCard({ restaurant, index }: { restaurant: Restaurant; index: number }) {
+function RestaurantCard({ restaurant, index }: { restaurant: any; index: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -292,7 +293,7 @@ function RestaurantCard({ restaurant, index }: { restaurant: Restaurant; index: 
             
             <div className="flex items-center justify-between">
               <div className="flex flex-wrap gap-1">
-                {restaurant.tags.slice(0, 2).map((tag) => (
+                {restaurant.tags.slice(0, 2).map((tag: string) => (
                   <Badge key={tag} variant="secondary" className="text-xs">
                     {tag}
                   </Badge>

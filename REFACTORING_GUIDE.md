@@ -1,4 +1,4 @@
-# 🔄 TipLink Refactoring Guide: Mock Data → Real Data
+# 🔄 AptoTip Refactoring Guide: Mock Data → Real Data
 
 This guide documents the complete integration ready for refactoring from mock data to real database + blockchain data.
 

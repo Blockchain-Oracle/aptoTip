@@ -39,6 +39,15 @@ export default function CreatePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
+              {/* Logo */}
+              <div className="flex justify-center mb-6">
+                <img 
+                  src="/image.png" 
+                  alt="AptoTip Logo" 
+                  className="w-28 h-28 object-contain"
+                />
+              </div>
+              
               <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
                 Create Your Tipping Profile
               </h1>
@@ -161,7 +170,7 @@ export default function CreatePage() {
           >
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Why Choose TipLink?
+                Why Choose AptoTip?
               </h2>
               <p className="text-lg text-gray-600">
                 The easiest way to receive tips from your supporters
@@ -213,7 +222,7 @@ export default function CreatePage() {
                 Success Stories
               </h2>
               <p className="text-lg text-gray-600">
-                See how others are using TipLink to grow their business
+                See how others are using AptoTip to grow their business
               </p>
             </div>
 
@@ -233,7 +242,7 @@ export default function CreatePage() {
                     </div>
                   </div>
                   <p className="text-gray-700 mb-3">
-                    "TipLink helped us increase our tips by 300% in just 2 months. 
+                    "AptoTip helped us increase our tips by 300% in just 2 months. 
                     Our customers love the convenience!"
                   </p>
                   <div className="text-2xl font-bold text-green-600">
@@ -257,7 +266,7 @@ export default function CreatePage() {
                     </div>
                   </div>
                   <p className="text-gray-700 mb-3">
-                    "As a musician, TipLink made it so easy for my fans to support me. 
+                    "As a musician, AptoTip made it so easy for my fans to support me. 
                     The Google sign-in is genius!"
                   </p>
                   <div className="text-2xl font-bold text-green-600">
@@ -282,7 +291,7 @@ export default function CreatePage() {
                   Ready to Start Receiving Tips?
                 </h2>
                 <p className="text-xl mb-6 opacity-90">
-                  Join thousands of restaurants and creators already using TipLink
+                  Join thousands of restaurants and creators already using AptoTip
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-gray-100">

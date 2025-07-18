@@ -1,6 +1,6 @@
-# 🗄️ Database Setup Guide - TipLink
+# 🗄️ Database Setup Guide - AptoTip
 
-This guide covers the new database integration using **Drizzle ORM** + **TanStack Query** for TipLink.
+This guide covers the new database integration using **Drizzle ORM** + **TanStack Query** for AptoTip.
 
 ## 🏗️ Architecture Overview
 

@@ -3,17 +3,23 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Star, MapPin, Heart, TrendingUp, Filter, Grid, List } from 'lucide-react'
+import { Star, MapPin, Heart, TrendingUp, Filter, Grid, List, Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Header } from '@/components/layouts/header'
-import { mockRestaurants, type Restaurant, restaurantCategories } from '@/lib/mock-data'
+import { useRestaurants, isRestaurant } from '@/hooks/useProfiles'
 import { formatCurrency } from '@/lib/format'
 import { ROUTES } from '@/lib/constants'
 import { useState } from 'react'
+
+// Restaurant categories for filtering
+const restaurantCategories = [
+  'Pizza', 'Italian', 'Sushi', 'Japanese', 'Healthy', 'Organic', 
+  'Vegan', 'Coffee', 'Mexican', 'Thai', 'Indian', 'American'
+]
 
 const categories = [
   { label: 'All Categories', value: '' },
@@ -25,15 +31,56 @@ export default function RestaurantsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchQuery, setSearchQuery] = useState('')
 
-  const filteredRestaurants = mockRestaurants.filter(restaurant => {
-    const matchesCategory = !selectedCategory || restaurant.tags.includes(selectedCategory)
+  // Use real database hook instead of mock data
+  const { data: restaurants, isLoading, error } = useRestaurants()
+
+  // Filter restaurants based on search and category
+  const filteredRestaurants = (restaurants || []).filter(restaurant => {
+    if (!isRestaurant(restaurant)) return false
+    
+    const matchesCategory = !selectedCategory || restaurant.tags?.includes(selectedCategory)
     const matchesSearch = !searchQuery || 
       restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      restaurant.bio.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      restaurant.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      restaurant.bio?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      restaurant.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
     
     return matchesCategory && matchesSearch
   })
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header variant="public" showSearch={true} />
+        <div className="container mx-auto px-4 lg:px-6 py-8">
+          <div className="text-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Loading restaurants...</h3>
+            <p className="text-gray-600">Finding the best places to tip</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header variant="public" showSearch={true} />
+        <div className="container mx-auto px-4 lg:px-6 py-8">
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">😞</div>
+            <h3 className="text-xl font-semibold mb-2">Failed to load restaurants</h3>
+            <p className="text-gray-600 mb-4">{error.message}</p>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -157,7 +204,7 @@ export default function RestaurantsPage() {
           >
             <h3 className="text-2xl font-bold mb-4">Own a restaurant?</h3>
             <p className="text-gray-600 mb-6">
-              Join TipLink and start receiving tips with zero setup fees
+              Join AptoTip and start receiving tips with zero setup fees
             </p>
             <Button asChild size="lg">
               <Link href={ROUTES.CREATE.RESTAURANT}>Create Restaurant Profile</Link>
@@ -169,7 +216,9 @@ export default function RestaurantsPage() {
   )
 }
 
-function RestaurantCard({ restaurant, index }: { restaurant: Restaurant; index: number }) {
+function RestaurantCard({ restaurant, index }: { restaurant: any; index: number }) {
+  if (!isRestaurant(restaurant)) return null
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -180,7 +229,7 @@ function RestaurantCard({ restaurant, index }: { restaurant: Restaurant; index: 
         <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer">
           <div className="relative h-48">
             <Image
-              src={restaurant.imageUrl}
+              src={restaurant.imageUrl || '/placeholder-restaurant.jpg'}
               alt={restaurant.name}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -214,7 +263,7 @@ function RestaurantCard({ restaurant, index }: { restaurant: Restaurant; index: 
             </p>
             
             <div className="flex flex-wrap gap-1 mb-3">
-              {restaurant.tags.slice(0, 3).map((tag) => (
+              {restaurant.tags?.slice(0, 3).map((tag: string) => (
                 <Badge key={tag} variant="secondary" className="text-xs">
                   {tag}
                 </Badge>
@@ -224,7 +273,7 @@ function RestaurantCard({ restaurant, index }: { restaurant: Restaurant; index: 
             <div className="flex items-center justify-between">
               <div className="text-sm">
                 <div className="font-semibold text-green-600">
-                  {formatCurrency(restaurant.totalTips)}
+                  {formatCurrency(restaurant.totalTips || 0)}
                 </div>
                 <div className="text-gray-500">
                   {restaurant.tipCount} tips
@@ -242,7 +291,9 @@ function RestaurantCard({ restaurant, index }: { restaurant: Restaurant; index: 
   )
 }
 
-function RestaurantListItem({ restaurant, index }: { restaurant: Restaurant; index: number }) {
+function RestaurantListItem({ restaurant, index }: { restaurant: any; index: number }) {
+  if (!isRestaurant(restaurant)) return null
+
   return (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
@@ -255,7 +306,7 @@ function RestaurantListItem({ restaurant, index }: { restaurant: Restaurant; ind
             <div className="flex items-center space-x-4">
               <div className="relative w-20 h-20 flex-shrink-0">
                 <Image
-                  src={restaurant.imageUrl}
+                  src={restaurant.imageUrl || '/placeholder-restaurant.jpg'}
                   alt={restaurant.name}
                   fill
                   className="object-cover rounded-lg"
@@ -269,9 +320,12 @@ function RestaurantListItem({ restaurant, index }: { restaurant: Restaurant; ind
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-lg group-hover:text-blue-600 transition-colors">
+                  <h3 className="font-semibold text-lg group-hover:text-blue-600 transition-colors truncate">
                     {restaurant.name}
                   </h3>
+                  <Button size="sm" variant="secondary" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Heart className="w-4 h-4" />
+                  </Button>
                 </div>
                 
                 <div className="flex items-center text-sm text-gray-600 mb-2">
@@ -284,27 +338,27 @@ function RestaurantListItem({ restaurant, index }: { restaurant: Restaurant; ind
                 </p>
                 
                 <div className="flex flex-wrap gap-1 mb-3">
-                  {restaurant.tags.slice(0, 4).map((tag) => (
+                  {restaurant.tags?.slice(0, 3).map((tag: string) => (
                     <Badge key={tag} variant="secondary" className="text-xs">
                       {tag}
                     </Badge>
                   ))}
                 </div>
-              </div>
-              
-              <div className="text-right">
-                <div className="text-sm mb-2">
-                  <div className="font-semibold text-green-600">
-                    {formatCurrency(restaurant.totalTips)}
-                  </div>
-                  <div className="text-gray-500">
-                    {restaurant.tipCount} tips
-                  </div>
-                </div>
                 
-                <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                  Tip Now
-                </Button>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm">
+                    <div className="font-semibold text-green-600">
+                      {formatCurrency(restaurant.totalTips || 0)}
+                    </div>
+                    <div className="text-gray-500">
+                      {restaurant.tipCount} tips
+                    </div>
+                  </div>
+                  
+                  <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    Tip Now
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>

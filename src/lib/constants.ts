@@ -1,4 +1,4 @@
-// TipLink Application Constants (Simplified Architecture)
+// AptoTip Application Constants (Simplified Architecture)
 
 // Tip amounts in cents (for USD display)
 export const DEFAULT_TIP_AMOUNTS = [

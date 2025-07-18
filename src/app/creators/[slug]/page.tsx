@@ -4,17 +4,19 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { notFound } from 'next/navigation'
-import { use } from 'react'
-import { Users, Heart, Share2, CheckCircle, Instagram, Youtube, Twitter, Globe, Image as ImageIcon, MessageCircle } from 'lucide-react'
+import { use, useState } from 'react'
+import { Users, Heart, Share2, CheckCircle, Instagram, Youtube, Twitter, Globe, Image as ImageIcon, MessageCircle, Edit } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { getCreatorBySlug } from '@/lib/mock-data'
+import { useProfile, isCreator } from '@/hooks/useProfiles'
+import { useKeylessAccount } from '@/hooks/useKeylessAccount'
 import { formatCurrency, formatCompactNumber } from '@/lib/format'
 import { ROUTES } from '@/lib/constants'
+import { AccountSwitcherModal } from '@/components/auth/AccountSwitcherModal'
 
 interface CreatorPageProps {
   params: Promise<{
@@ -24,9 +26,36 @@ interface CreatorPageProps {
 
 export default function CreatorPage({ params }: CreatorPageProps) {
   const { slug } = use(params)
-  const creator = getCreatorBySlug(slug)
+  const { data: creator, isLoading, error } = useProfile(slug)
+  const { account, isAuthenticated } = useKeylessAccount()
+  const [showAccountSwitcher, setShowAccountSwitcher] = useState(false)
 
-  if (!creator) {
+  // Check if current user owns this profile
+  const isOwner = isAuthenticated && account && creator && 
+    account.accountAddress.toString() === creator.walletAddress
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 lg:px-6 py-8">
+        <div className="animate-pulse">
+          <div className="h-96 bg-gray-200 rounded-2xl mb-8"></div>
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+              <div className="h-32 bg-gray-200 rounded"></div>
+              <div className="h-64 bg-gray-200 rounded"></div>
+              <div className="h-48 bg-gray-200 rounded"></div>
+            </div>
+            <div className="space-y-6">
+              <div className="h-48 bg-gray-200 rounded"></div>
+              <div className="h-64 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !creator || !isCreator(creator)) {
     notFound()
   }
 
@@ -40,7 +69,7 @@ export default function CreatorPage({ params }: CreatorPageProps) {
         transition={{ duration: 0.6 }}
       >
         <Image
-          src={creator.bannerUrl}
+          src={creator.bannerUrl || '/images/default-banner.jpg'}
           alt={creator.name}
           fill
           className="object-cover"
@@ -52,9 +81,9 @@ export default function CreatorPage({ params }: CreatorPageProps) {
           <div className="flex items-end justify-between">
             <div className="flex items-end space-x-6">
               <Avatar className="w-24 h-24 border-4 border-white">
-                <AvatarImage src={creator.imageUrl} alt={creator.name} />
+                <AvatarImage src={creator.imageUrl || undefined} alt={creator.name} />
                 <AvatarFallback className="text-2xl">
-                  {creator.name.split(' ').map(n => n[0]).join('')}
+                  {creator.name.split(' ').map((n: string) => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
               
@@ -72,7 +101,7 @@ export default function CreatorPage({ params }: CreatorPageProps) {
                 <div className="flex items-center space-x-4 mb-4">
                   <div className="flex items-center space-x-1">
                     <Users className="w-5 h-5" />
-                    <span className="font-semibold">{formatCompactNumber(creator.followers)}</span>
+                    <span className="font-semibold">{formatCompactNumber(creator.followers || 0)}</span>
                     <span className="text-white/80">followers</span>
                   </div>
                   
@@ -82,7 +111,7 @@ export default function CreatorPage({ params }: CreatorPageProps) {
                 </div>
                 
                 <div className="flex flex-wrap gap-2">
-                  {creator.tags.map((tag) => (
+                  {(creator.tags || []).map((tag: string) => (
                     <Badge key={tag} variant="secondary" className="bg-white/20 text-white border-white/30">
                       {tag}
                     </Badge>
@@ -100,6 +129,47 @@ export default function CreatorPage({ params }: CreatorPageProps) {
                 <Heart className="w-4 h-4 mr-2" />
                 Follow
               </Button>
+              {isOwner ? (
+                <Button 
+                  asChild
+                  size="sm" 
+                  variant="secondary" 
+                  className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                >
+                  <Link href={`/edit/creator/${creator.slug}`}>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Profile
+                  </Link>
+                </Button>
+              ) : isAuthenticated ? (
+                <div className="flex flex-col space-y-2">
+                  <div className="text-xs text-white/80 text-center px-2">
+                    <div>Not your profile</div>
+                    <div className="font-mono text-[10px] mt-1 opacity-60">
+                      {account?.accountAddress.toString().slice(0, 8)}...{account?.accountAddress.toString().slice(-6)}
+                    </div>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="secondary" 
+                    className="bg-white/10 hover:bg-white/20 text-white/60 border-white/20 cursor-not-allowed"
+                    disabled
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Profile
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  size="sm" 
+                  variant="secondary" 
+                  className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                  onClick={() => setShowAccountSwitcher(true)}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Sign In to Edit
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -119,7 +189,7 @@ export default function CreatorPage({ params }: CreatorPageProps) {
                 <CardTitle>About {creator.name}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-700 leading-relaxed">{creator.bio}</p>
+                <p className="text-gray-700 leading-relaxed">{creator.bio || 'No bio available.'}</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -139,7 +209,7 @@ export default function CreatorPage({ params }: CreatorPageProps) {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {creator.portfolioImages.map((image, index) => (
+                  {(creator.portfolioImages || []).map((image: string, index: number) => (
                     <div 
                       key={index} 
                       className="group relative aspect-video rounded-lg overflow-hidden"
@@ -154,42 +224,9 @@ export default function CreatorPage({ params }: CreatorPageProps) {
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Recent Tips */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <MessageCircle className="w-5 h-5 mr-2" />
-                  Recent Tips
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {creator.recentTips.map((tip, index) => (
-                    <div key={index} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
-                      <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
-                        {tip.anonymous ? '?' : tip.message[0]}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-semibold text-green-600">
-                            {formatCurrency(tip.amount)}
-                          </span>
-                          <span className="text-sm text-gray-500">{tip.timestamp}</span>
-                        </div>
-                        <p className="text-gray-700">{tip.message}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                {(!creator.portfolioImages || creator.portfolioImages.length === 0) && (
+                  <p className="text-gray-500 text-center py-8">No portfolio images available.</p>
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -210,10 +247,10 @@ export default function CreatorPage({ params }: CreatorPageProps) {
               <CardContent className="space-y-4">
                 <div className="text-center">
                   <div className="text-3xl font-bold text-green-600 mb-1">
-                    {formatCurrency(creator.totalTips)}
+                    {formatCurrency(creator.totalTips || 0)}
                   </div>
                   <div className="text-sm text-gray-600">
-                    Total tips received from {creator.tipCount} supporters
+                    Total tips received from {creator.tipCount || 0} supporters
                   </div>
                 </div>
                 
@@ -242,7 +279,7 @@ export default function CreatorPage({ params }: CreatorPageProps) {
                 <CardTitle>Social Links</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {creator.socialLinks.instagram && (
+                {creator.socialLinks?.instagram && (
                   <a 
                     href={`https://instagram.com/${creator.socialLinks.instagram.replace('@', '')}`}
                     target="_blank"
@@ -254,7 +291,7 @@ export default function CreatorPage({ params }: CreatorPageProps) {
                   </a>
                 )}
                 
-                {creator.socialLinks.youtube && (
+                {creator.socialLinks?.youtube && (
                   <a 
                     href={`https://youtube.com/${creator.socialLinks.youtube.replace('@', '')}`}
                     target="_blank"
@@ -266,7 +303,7 @@ export default function CreatorPage({ params }: CreatorPageProps) {
                   </a>
                 )}
                 
-                {creator.socialLinks.twitter && (
+                {creator.socialLinks?.twitter && (
                   <a 
                     href={`https://twitter.com/${creator.socialLinks.twitter.replace('@', '')}`}
                     target="_blank"
@@ -278,7 +315,7 @@ export default function CreatorPage({ params }: CreatorPageProps) {
                   </a>
                 )}
                 
-                {creator.socialLinks.website && (
+                {creator.socialLinks?.website && (
                   <a 
                     href={creator.socialLinks.website}
                     target="_blank"
@@ -289,11 +326,23 @@ export default function CreatorPage({ params }: CreatorPageProps) {
                     <span className="font-medium">Website</span>
                   </a>
                 )}
+                
+                {(!creator.socialLinks?.instagram && !creator.socialLinks?.youtube && !creator.socialLinks?.twitter && !creator.socialLinks?.website) && (
+                  <p className="text-gray-500 text-center py-4">No social links available.</p>
+                )}
               </CardContent>
             </Card>
           </motion.div>
         </div>
       </div>
+      
+      {/* Account Switcher Modal */}
+      <AccountSwitcherModal
+        open={showAccountSwitcher}
+        onOpenChange={setShowAccountSwitcher}
+        currentWalletAddress={account?.accountAddress.toString()}
+        requiredWalletAddress={creator?.walletAddress}
+      />
     </div>
   )
 }

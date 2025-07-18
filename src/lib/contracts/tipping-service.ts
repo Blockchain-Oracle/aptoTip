@@ -53,45 +53,39 @@ export interface PlatformConfig {
 
 export class TippingService {
   private client: Aptos;
-  private adminAccount: Account;
   
   constructor() {
     const config = new AptosConfig({ 
       network: process.env.NEXT_PUBLIC_APTOS_NETWORK === 'mainnet' ? Network.MAINNET : Network.DEVNET 
     });
     this.client = new Aptos(config);
-    
-    // Initialize admin account with private key
-    const adminPrivateKey = process.env.ADMIN_PRIVATE_KEY;
-    if (!adminPrivateKey) {
-      throw new Error('ADMIN_PRIVATE_KEY environment variable is required');
-    }
-    
-    const privateKey = new Ed25519PrivateKey(adminPrivateKey as HexInput);
-    this.adminAccount = Account.fromPrivateKey({ privateKey });
   }
   
   /**
-   * Create a profile on-chain using admin account
-   * This allows users to register without needing their own wallet
+   * Create a profile on-chain using user's keyless account
+   * This requires the user to have a keyless account set up
+   * The contract requires the user's signature since profile is created in their account
    */
-  async createProfileOnChain(userAddress: string, profileType: 'restaurant' | 'creator'): Promise<string> {
+  async createProfileOnChain(userAccount: Account, profileType: 'restaurant' | 'creator'): Promise<string> {
     try {
       const profileTypeNumber = profileType === 'restaurant' ? 1 : 2;
       
+      console.log(`Creating profile for ${userAccount.accountAddress.toString()} with type ${profileType}...`);
+      
+      // Build transaction using user's account as sender (required by contract)
       const transaction = await this.client.transaction.build.simple({
-        sender: this.adminAccount.accountAddress,
+        sender: userAccount.accountAddress,
         data: {
           function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::create_profile`,
           functionArguments: [
-            userAddress,
-            profileTypeNumber
+            profileTypeNumber  // Only pass the profile type
           ]
         }
       });
       
+      // Submit transaction using user's account (required by contract)
       const pendingTransaction = await this.client.signAndSubmitTransaction({
-        signer: this.adminAccount,
+        signer: userAccount,
         transaction: transaction,
       });
       
@@ -100,18 +94,19 @@ export class TippingService {
         transactionHash: pendingTransaction.hash 
       });
       
-      console.log(`Profile created for ${userAddress} with type ${profileType}`);
+      console.log(`✅ Profile created successfully for ${userAccount.accountAddress.toString()} with type ${profileType}`);
+      console.log(`Transaction hash: ${pendingTransaction.hash}`);
+      
       return pendingTransaction.hash;
       
     } catch (error) {
-      console.error('Error creating profile on-chain:', error);
+      console.error('❌ Error creating profile on-chain:', error);
       throw new Error(`Failed to create profile: ${error}`);
     }
   }
   
   /**
-   * Send a tip using user's keyless account
-   * This requires the user to have a keyless account set up
+   * Send tip from one account to another
    */
   async sendTip(
     tipperAccount: Account, 
@@ -120,8 +115,18 @@ export class TippingService {
     message: string
   ): Promise<string> {
     try {
-      // Convert amount to octas (8 decimal places)
+      console.log(`🎯 Starting tip process...`);
+      console.log(`From: ${tipperAccount.accountAddress}`);
+      console.log(`To: ${recipientAddress}`);
+      console.log(`Amount: ${amount} APT`);
+      
+      // Ensure both accounts are funded for transaction fees
+      await this.ensureAccountFunded(tipperAccount.accountAddress.toString());
+      await this.ensureAccountFunded(recipientAddress);
+      
       const amountInOctas = Math.round(amount * 100000000);
+      
+      console.log(`Sending tip: ${amount} APT to ${recipientAddress}...`);
       
       const transaction = await this.client.transaction.build.simple({
         sender: tipperAccount.accountAddress,
@@ -145,12 +150,55 @@ export class TippingService {
         transactionHash: pendingTransaction.hash 
       });
       
-      console.log(`Tip sent: ${amount} APT to ${recipientAddress}`);
+      console.log(`✅ Tip sent successfully: ${amount} APT to ${recipientAddress}`);
+      console.log(`Transaction hash: ${pendingTransaction.hash}`);
+      
       return pendingTransaction.hash;
       
     } catch (error) {
-      console.error('Error sending tip:', error);
+      console.error('❌ Error sending tip:', error);
       throw new Error(`Failed to send tip: ${error}`);
+    }
+  }
+
+  /**
+   * Ensure an account has sufficient APT for transaction fees
+   */
+  private async ensureAccountFunded(address: string): Promise<void> {
+    try {
+      // Check current balance using the correct method
+      const resources = await this.client.getAccountResources({ accountAddress: address });
+      const coinResource = resources.find((r: any) => r.type.includes('CoinStore'));
+      
+      let currentBalance = 0;
+      if (coinResource) {
+        const coinData = coinResource.data as any;
+        currentBalance = coinData?.coin?.value ? parseInt(coinData.coin.value) : 0;
+      }
+      
+      const minBalance = 1000000; // 0.01 APT minimum for fees
+      
+      console.log(`💰 Account ${address} balance: ${currentBalance / 100000000} APT`);
+      
+      if (currentBalance < minBalance) {
+        console.log(`⚠️ Account ${address} needs funding. Current: ${currentBalance / 100000000} APT, Need: ${minBalance / 100000000} APT`);
+        
+        // Fund the account using faucet
+        await this.client.fundAccount({
+          accountAddress: address,
+          amount: 100000000 // 1 APT
+        });
+        
+        console.log(`✅ Funded account ${address} with 1 APT`);
+        
+        // Wait a moment for the funding transaction to be processed
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } else {
+        console.log(`✅ Account ${address} has sufficient balance`);
+      }
+    } catch (error) {
+      console.warn(`⚠️ Failed to check/fund account ${address}:`, error);
+      // Continue anyway - the transaction might still work
     }
   }
   
@@ -229,7 +277,7 @@ export class TippingService {
       return {
         platform_fee_rate: parseInt(result[0] as string),
         platform_treasury: result[1] as string,
-        admin: result[2] as string, // Add admin field
+        admin: result[2] as string,
         paused: result[3] as boolean,
         total_platform_volume: parseInt(result[4] as string),
         total_platform_fees: parseInt(result[5] as string)
@@ -336,45 +384,6 @@ export class TippingService {
       console.error('Error syncing blockchain data:', error);
       return null;
     }
-  }
-  
-  /**
-   * Initialize platform (admin only)
-   * This should be called once when deploying the contract
-   */
-  async initializePlatform(): Promise<string> {
-    try {
-      const transaction = await this.client.transaction.build.simple({
-        sender: this.adminAccount.accountAddress,
-        data: {
-          function: `${CONTRACT_ADDRESS}::${MODULE_NAME}::initialize_platform`,
-          functionArguments: []
-        }
-      });
-      
-      const pendingTransaction = await this.client.signAndSubmitTransaction({
-        signer: this.adminAccount,
-        transaction: transaction,
-      });
-      
-      const result = await this.client.waitForTransaction({ 
-        transactionHash: pendingTransaction.hash 
-      });
-      
-      console.log('Platform initialized successfully');
-      return pendingTransaction.hash;
-      
-    } catch (error) {
-      console.error('Error initializing platform:', error);
-      throw new Error(`Failed to initialize platform: ${error}`);
-    }
-  }
-  
-  /**
-   * Get admin account address
-   */
-  getAdminAddress(): string {
-    return this.adminAccount.accountAddress.toString();
   }
 }
 

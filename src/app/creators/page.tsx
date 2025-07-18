@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Users, Heart, Grid, List, Instagram, Youtube, Twitter, CheckCircle } from 'lucide-react'
+import { Users, Heart, Grid, List, Instagram, Youtube, Twitter, CheckCircle, Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,10 +11,16 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Header } from '@/components/layouts/header'
-import { mockCreators, type Creator, creatorCategories } from '@/lib/mock-data'
+import { useCreators, isCreator } from '@/hooks/useProfiles'
 import { formatCurrency, formatCompactNumber } from '@/lib/format'
 import { ROUTES } from '@/lib/constants'
 import { useState } from 'react'
+
+// Creator categories for filtering
+const creatorCategories = [
+  'Music', 'Art', 'Gaming', 'Education', 'Comedy', 'Fitness', 
+  'Cooking', 'Travel', 'Technology', 'Fashion', 'Lifestyle', 'Business'
+]
 
 const categories = [
   { label: 'All Categories', value: '' },
@@ -26,15 +32,56 @@ export default function CreatorsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchQuery, setSearchQuery] = useState('')
 
-  const filteredCreators = mockCreators.filter(creator => {
-    const matchesCategory = !selectedCategory || creator.tags.includes(selectedCategory)
+  // Use real database hook instead of mock data
+  const { data: creators, isLoading, error } = useCreators()
+
+  // Filter creators based on search and category
+  const filteredCreators = (creators || []).filter(creator => {
+    if (!isCreator(creator)) return false
+    
+    const matchesCategory = !selectedCategory || creator.tags?.includes(selectedCategory)
     const matchesSearch = !searchQuery || 
       creator.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      creator.bio.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      creator.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      creator.bio?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      creator.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
     
     return matchesCategory && matchesSearch
   })
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header variant="public" showSearch={true} />
+        <div className="container mx-auto px-4 lg:px-6 py-8">
+          <div className="text-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Loading creators...</h3>
+            <p className="text-gray-600">Finding amazing creators to support</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header variant="public" showSearch={true} />
+        <div className="container mx-auto px-4 lg:px-6 py-8">
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">😞</div>
+            <h3 className="text-xl font-semibold mb-2">Failed to load creators</h3>
+            <p className="text-gray-600 mb-4">{error.message}</p>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -170,7 +217,9 @@ export default function CreatorsPage() {
   )
 }
 
-function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
+function CreatorCard({ creator, index }: { creator: any; index: number }) {
+  if (!isCreator(creator)) return null
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -181,7 +230,7 @@ function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
         <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer">
           <div className="relative h-48">
             <Image
-              src={creator.bannerUrl}
+              src={creator.bannerUrl || '/placeholder-banner.jpg'}
               alt={creator.name}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -196,11 +245,17 @@ function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
             {/* Avatar overlay */}
             <div className="absolute bottom-4 left-4">
               <Avatar className="w-12 h-12 border-2 border-white">
-                <AvatarImage src={creator.imageUrl} alt={creator.name} />
+                <AvatarImage src={creator.imageUrl || undefined} alt={creator.name} />
                 <AvatarFallback>
-                  {creator.name.split(' ').map(n => n[0]).join('')}
+                  {creator.name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
+            </div>
+            
+            <div className="absolute top-3 right-3">
+              <Button size="sm" variant="secondary" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Heart className="w-4 h-4" />
+              </Button>
             </div>
           </div>
           
@@ -211,31 +266,17 @@ function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
               </h3>
             </div>
             
+            <div className="flex items-center text-sm text-gray-600 mb-2">
+              <Users className="w-4 h-4 mr-1" />
+              {formatCompactNumber(creator.followers || 0)} followers
+            </div>
+            
             <p className="text-gray-600 text-sm mb-3 line-clamp-2">
               {creator.bio}
             </p>
             
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-1 text-sm text-gray-600">
-                <Users className="w-4 h-4" />
-                <span>{formatCompactNumber(creator.followers)} followers</span>
-              </div>
-              
-              <div className="flex items-center space-x-1">
-                {creator.socialLinks.instagram && (
-                  <Instagram className="w-4 h-4 text-pink-500" />
-                )}
-                {creator.socialLinks.youtube && (
-                  <Youtube className="w-4 h-4 text-red-500" />
-                )}
-                {creator.socialLinks.twitter && (
-                  <Twitter className="w-4 h-4 text-blue-500" />
-                )}
-              </div>
-            </div>
-            
             <div className="flex flex-wrap gap-1 mb-3">
-              {creator.tags.slice(0, 3).map((tag) => (
+              {creator.tags?.slice(0, 3).map((tag: string) => (
                 <Badge key={tag} variant="secondary" className="text-xs">
                   {tag}
                 </Badge>
@@ -245,10 +286,10 @@ function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
             <div className="flex items-center justify-between">
               <div className="text-sm">
                 <div className="font-semibold text-green-600">
-                  {formatCurrency(creator.totalTips)}
+                  {formatCurrency(creator.totalTips || 0)}
                 </div>
                 <div className="text-gray-500">
-                  {creator.tipCount} tips
+                  {creator.tipCount || 0} tips
                 </div>
               </div>
               
@@ -263,7 +304,9 @@ function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
   )
 }
 
-function CreatorListItem({ creator, index }: { creator: Creator; index: number }) {
+function CreatorListItem({ creator, index }: { creator: any; index: number }) {
+  if (!isCreator(creator)) return null
+
   return (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
@@ -276,70 +319,59 @@ function CreatorListItem({ creator, index }: { creator: Creator; index: number }
             <div className="flex items-center space-x-4">
               <div className="relative w-20 h-20 flex-shrink-0">
                 <Avatar className="w-20 h-20">
-                  <AvatarImage src={creator.imageUrl} alt={creator.name} />
+                  <AvatarImage src={creator.imageUrl || undefined} alt={creator.name} />
                   <AvatarFallback>
-                    {creator.name.split(' ').map(n => n[0]).join('')}
+                    {creator.name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
                 {creator.verified && (
                   <Badge className="absolute -top-2 -right-2 bg-purple-600 text-xs">
-                    ✓
+                    <CheckCircle className="w-3 h-3" />
                   </Badge>
                 )}
               </div>
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-lg group-hover:text-purple-600 transition-colors">
+                  <h3 className="font-semibold text-lg group-hover:text-purple-600 transition-colors truncate">
                     {creator.name}
                   </h3>
+                  <Button size="sm" variant="secondary" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Heart className="w-4 h-4" />
+                  </Button>
+                </div>
+                
+                <div className="flex items-center text-sm text-gray-600 mb-2">
+                  <Users className="w-4 h-4 mr-1" />
+                  {formatCompactNumber(creator.followers || 0)} followers
                 </div>
                 
                 <p className="text-gray-600 text-sm mb-3 line-clamp-2">
                   {creator.bio}
                 </p>
                 
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-1 text-sm text-gray-600">
-                    <Users className="w-4 h-4" />
-                    <span>{formatCompactNumber(creator.followers)} followers</span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-1">
-                    {creator.socialLinks.instagram && (
-                      <Instagram className="w-4 h-4 text-pink-500" />
-                    )}
-                    {creator.socialLinks.youtube && (
-                      <Youtube className="w-4 h-4 text-red-500" />
-                    )}
-                    {creator.socialLinks.twitter && (
-                      <Twitter className="w-4 h-4 text-blue-500" />
-                    )}
-                  </div>
-                </div>
-                
                 <div className="flex flex-wrap gap-1 mb-3">
-                  {creator.tags.slice(0, 4).map((tag) => (
+                  {creator.tags?.slice(0, 3).map((tag: string) => (
                     <Badge key={tag} variant="secondary" className="text-xs">
                       {tag}
                     </Badge>
                   ))}
                 </div>
-              </div>
-              
-              <div className="text-right">
-                <div className="text-sm mb-2">
-                  <div className="font-semibold text-green-600">
-                    {formatCurrency(creator.totalTips)}
-                  </div>
-                  <div className="text-gray-500">
-                    {creator.tipCount} tips
-                  </div>
-                </div>
                 
-                <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                  Tip Now
-                </Button>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm">
+                    <div className="font-semibold text-green-600">
+                      {formatCurrency(creator.totalTips || 0)}
+                    </div>
+                    <div className="text-gray-500">
+                      {creator.tipCount || 0} tips
+                    </div>
+                  </div>
+                  
+                  <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    Tip Now
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
