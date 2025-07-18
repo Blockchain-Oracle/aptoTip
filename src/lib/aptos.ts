@@ -42,15 +42,15 @@ export const aptos = new Aptos(aptosConfig);
 
 // Contract configuration
 export const CONTRACT_CONFIG = {
-  address: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0xb9df0f08ed0cc8168bbf8cda8b67124a83a2dbf0d1e57221bb5a3d9123b2e16a',
+  address: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x8176111060a311a98b3a374d3afdd5c7e1428ee89caa18080f910b88165797eb',
   module: process.env.NEXT_PUBLIC_CONTRACT_MODULE || 'tipping_system',
-  moduleAddress: process.env.NEXT_PUBLIC_MODULE_ADDRESS || '0xb9df0f08ed0cc8168bbf8cda8b67124a83a2dbf0d1e57221bb5a3d9123b2e16a::tipping_system',
+  moduleAddress: process.env.NEXT_PUBLIC_MODULE_ADDRESS || '0x8176111060a311a98b3a374d3afdd5c7e1428ee89caa18080f910b88165797eb::tipping_system',
 } as const;
 
 // Platform configuration
 export const PLATFORM_CONFIG = {
   feeRate: parseInt(process.env.NEXT_PUBLIC_PLATFORM_FEE_RATE || '200'), // 2%
-  treasury: process.env.NEXT_PUBLIC_PLATFORM_TREASURY || '0xb9df0f08ed0cc8168bbf8cda8b67124a83a2dbf0d1e57221bb5a3d9123b2e16a',
+  treasury: process.env.NEXT_PUBLIC_PLATFORM_TREASURY || '0x8176111060a311a98b3a374d3afdd5c7e1428ee89caa18080f910b88165797eb',
 } as const;
 
 // Keyless configuration

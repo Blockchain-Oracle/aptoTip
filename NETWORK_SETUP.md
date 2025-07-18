@@ -117,19 +117,19 @@ import { NetworkIndicator } from '@/components/ui/network-switcher';
 ### **Devnet Deployment**
 ```bash
 # Deploy to devnet
-aptos move publish --named-addresses TipLink=0xb9df0f08ed0cc8168bbf8cda8b67124a83a2dbf0d1e57221bb5a3d9123b2e16a --profile devnet
+aptos move publish --named-addresses TipLink=0x8176111060a311a98b3a374d3afdd5c7e1428ee89caa18080f910b88165797eb --profile devnet
 ```
 
 ### **Testnet Deployment**
 ```bash
 # Deploy to testnet
-aptos move publish --named-addresses TipLink=0xb9df0f08ed0cc8168bbf8cda8b67124a83a2dbf0d1e57221bb5a3d9123b2e16a --profile testnet
+aptos move publish --named-addresses TipLink=0x8176111060a311a98b3a374d3afdd5c7e1428ee89caa18080f910b88165797eb --profile testnet
 ```
 
 ### **Mainnet Deployment**
 ```bash
 # Deploy to mainnet (be careful!)
-aptos move publish --named-addresses TipLink=0xb9df0f08ed0cc8168bbf8cda8b67124a83a2dbf0d1e57221bb5a3d9123b2e16a --profile mainnet
+aptos move publish --named-addresses TipLink=0x8176111060a311a98b3a374d3afdd5c7e1428ee89caa18080f910b88165797eb --profile mainnet
 ```
 
 ## 📊 **Network Comparison**

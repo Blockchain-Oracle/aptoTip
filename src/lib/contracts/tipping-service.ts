@@ -56,7 +56,9 @@ export class TippingService {
   
   constructor() {
     const config = new AptosConfig({ 
-      network: process.env.NEXT_PUBLIC_APTOS_NETWORK === 'mainnet' ? Network.MAINNET : Network.DEVNET 
+      network: process.env.NEXT_PUBLIC_APTOS_NETWORK === 'mainnet' ? Network.MAINNET : Network.DEVNET,
+      fullnode: process.env.NEXT_PUBLIC_APTOS_NODE_URL,
+      faucet: process.env.NEXT_PUBLIC_APTOS_FAUCET_URL
     });
     this.client = new Aptos(config);
   }

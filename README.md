@@ -36,10 +36,10 @@ TipLink eliminates crypto complexity by using **Aptos Keyless Accounts** with Go
 ## 🏗️ **Move Smart Contract Implementation**
 
 ### **Contract Address & Deployment**
-- **Contract Address**: `0xb9df0f08ed0cc8168bbf8cda8b67124a83a2dbf0d1e57221bb5a3d9123b2e16a`
+- **Contract Address**: `0x8176111060a311a98b3a374d3afdd5c7e1428ee89caa18080f910b88165797eb`
 - **Module**: `tipping_system`
 - **Network**: Aptos Devnet
-- **Explorer**: [View on Aptos Explorer](https://explorer.aptoslabs.com/account/0xb9df0f08ed0cc8168bbf8cda8b67124a83a2dbf0d1e57221bb5a3d9123b2e16a?network=devnet)
+- **Explorer**: [View on Aptos Explorer](https://explorer.aptoslabs.com/account/0x8176111060a311a98b3a374d3afdd5c7e1428ee89caa18080f910b88165797eb?network=devnet)
 
 ### **Core Contract Features**
 
@@ -163,7 +163,7 @@ const tipEvents = await client.getEventsByEventHandle({
 ```env
 NEXT_PUBLIC_APTOS_NETWORK=devnet
 NEXT_PUBLIC_APTOS_NODE_URL=https://fullnode.devnet.aptoslabs.com/v1
-NEXT_PUBLIC_CONTRACT_ADDRESS=0xb9df0f08ed0cc8168bbf8cda8b67124a83a2dbf0d1e57221bb5a3d9123b2e16a
+NEXT_PUBLIC_CONTRACT_ADDRESS=0x8176111060a311a98b3a374d3afdd5c7e1428ee89caa18080f910b88165797eb
 ```
 
 ### **Ready for Mainnet**
