@@ -1,0 +1,17 @@
+[package]
+name = "tiplink_contracts"
+version = "1.0.0"
+authors = []
+
+[addresses]
+tiplink_contracts = "_"
+
+[dev-addresses]
+tiplink_contracts = "0xb9df0f08ed0cc8168bbf8cda8b67124a83a2dbf0d1e57221bb5a3d9123b2e16a"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "devnet"
+subdir = "aptos-framework"
+
+[dev-dependencies]

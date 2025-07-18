@@ -123,13 +123,11 @@ export default function CreateCreatorPage() {
   // Show loading state while checking authentication
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-2xl mx-auto text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Connecting to your account...</h3>
-            <p className="text-gray-600">Please wait while we set up your keyless account</p>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <h3 className="text-xl font-semibold mb-2">Connecting to your account...</h3>
+          <p className="text-gray-600">Please wait while we set up your keyless account</p>
         </div>
       </div>
     )
@@ -138,37 +136,37 @@ export default function CreateCreatorPage() {
   // Show login prompt if not authenticated
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
-        <div className="container mx-auto px-4 py-6 sm:py-8">
-          <div className="max-w-2xl mx-auto text-center">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">Create Creator Profile</h1>
-            <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8">Sign in to create your creator profile and start receiving tips</p>
-            
-            <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
-              <div className="mb-6">
-                <h2 className="text-lg sm:text-xl font-semibold mb-2">Get Started with AptoTip</h2>
-                <p className="text-sm sm:text-base text-gray-600">Connect your Google account to create your creator profile</p>
-              </div>
-              
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-red-600 text-sm">{error}</p>
-                </div>
-              )}
-              
-              <Button 
-                onClick={handleLogin}
-                className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-semibold"
-                size="lg"
-              >
-                <LogIn className="w-5 h-5 mr-2" />
-                Sign in with Google
-              </Button>
-              
-              <p className="text-xs sm:text-sm text-gray-500 mt-4">
-                No crypto knowledge required. We'll set up your keyless account automatically.
-              </p>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Create Creator Profile</h1>
+            <p className="text-gray-600">Sign in to create your creator profile and start receiving tips</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-2">Get Started with AptoTip</h2>
+              <p className="text-gray-600">Connect your Google account to create your creator profile</p>
             </div>
+            
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-600">{error}</p>
+              </div>
+            )}
+            
+            <Button 
+              onClick={handleLogin}
+              className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+              size="lg"
+            >
+              <LogIn className="w-5 h-5 mr-2" />
+              Sign in with Google
+            </Button>
+            
+            <p className="text-sm text-gray-500 mt-4 text-center">
+              No crypto knowledge required. We'll set up your keyless account automatically.
+            </p>
           </div>
         </div>
       </div>
@@ -177,19 +175,21 @@ export default function CreateCreatorPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
-      <div className="container mx-auto px-4 py-6 sm:py-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 text-center">Create Creator Profile</h1>
-          <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 text-center">Set up your creator profile to start receiving tips</p>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Create Creator Profile</h1>
+            <p className="text-gray-600">Set up your creator profile to start receiving tips</p>
+          </div>
           
-          <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
-            <div className="space-y-6 sm:space-y-8">
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <div className="space-y-8">
               {/* Basic Information */}
-              <div className="space-y-4 sm:space-y-6">
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Basic Information</h2>
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-gray-900">Basic Information</h2>
                 
                 <div>
-                  <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Creator Name *
                   </label>
                   <input
@@ -197,7 +197,7 @@ export default function CreateCreatorPage() {
                     placeholder="e.g., Alice Sterling"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className={`w-full px-3 py-2 sm:py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base ${
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
                       errors.name ? 'border-red-500' : 'border-gray-300'
                     }`}
                   />
@@ -205,7 +205,7 @@ export default function CreateCreatorPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Bio *
                   </label>
                   <textarea
@@ -213,11 +213,11 @@ export default function CreateCreatorPage() {
                     value={formData.bio}
                     onChange={(e) => handleInputChange('bio', e.target.value)}
                     rows={4}
-                    className={`w-full px-3 py-2 sm:py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base ${
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
                       errors.bio ? 'border-red-500' : 'border-gray-300'
                     }`}
                   />
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-gray-500 mt-1">
                     {formData.bio.length}/500 characters (minimum 50)
                   </p>
                   {errors.bio && <p className="text-red-500 text-sm mt-1">{errors.bio}</p>}
@@ -225,13 +225,13 @@ export default function CreateCreatorPage() {
               </div>
 
               {/* Images */}
-              <div className="space-y-4 sm:space-y-6">
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Images</h2>
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-gray-900">Images</h2>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Profile Image */}
                   <div>
-                    <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Profile Image *
                     </label>
                     <UploadButton
@@ -240,38 +240,32 @@ export default function CreateCreatorPage() {
                       onUploadError={handleUploadError}
                       className="w-full"
                     >
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-purple-500 transition-colors">
-                        {formData.imageUrl ? (
-                          <div className="relative">
-                            <img
-                              src={formData.imageUrl}
-                              alt="Profile"
-                              className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-lg object-cover"
-                            />
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault()
-                                setFormData(prev => ({ ...prev, imageUrl: '' }))
-                              }}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div>
-                            <Camera className="w-8 h-8 sm:w-12 sm:h-12 mx-auto text-gray-400 mb-2" />
-                            <p className="text-sm text-gray-600">Upload profile image</p>
-                          </div>
-                        )}
+                      <div className="flex items-center space-x-2">
+                        <Camera className="w-4 h-4" />
+                        <span>Upload Profile Image</span>
                       </div>
                     </UploadButton>
+                    {formData.imageUrl && (
+                      <div className="mt-4 relative inline-block">
+                        <img
+                          src={formData.imageUrl}
+                          alt="Profile"
+                          className="w-20 h-20 rounded-lg object-cover"
+                        />
+                        <button
+                          onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
                     {errors.imageUrl && <p className="text-red-500 text-sm mt-1">{errors.imageUrl}</p>}
                   </div>
 
                   {/* Banner Image */}
                   <div>
-                    <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Banner Image *
                     </label>
                     <UploadButton
@@ -280,39 +274,33 @@ export default function CreateCreatorPage() {
                       onUploadError={handleUploadError}
                       className="w-full"
                     >
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-purple-500 transition-colors">
-                        {formData.bannerUrl ? (
-                          <div className="relative">
-                            <img
-                              src={formData.bannerUrl}
-                              alt="Banner"
-                              className="w-full h-20 sm:h-24 mx-auto rounded-lg object-cover"
-                            />
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault()
-                                setFormData(prev => ({ ...prev, bannerUrl: '' }))
-                              }}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div>
-                            <Camera className="w-8 h-8 sm:w-12 sm:h-12 mx-auto text-gray-400 mb-2" />
-                            <p className="text-sm text-gray-600">Upload banner image</p>
-                          </div>
-                        )}
+                      <div className="flex items-center space-x-2">
+                        <Camera className="w-4 h-4" />
+                        <span>Upload Banner Image</span>
                       </div>
                     </UploadButton>
+                    {formData.bannerUrl && (
+                      <div className="mt-4 relative inline-block">
+                        <img
+                          src={formData.bannerUrl}
+                          alt="Banner"
+                          className="w-full h-20 rounded-lg object-cover"
+                        />
+                        <button
+                          onClick={() => setFormData(prev => ({ ...prev, bannerUrl: '' }))}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
                     {errors.bannerUrl && <p className="text-red-500 text-sm mt-1">{errors.bannerUrl}</p>}
                   </div>
                 </div>
 
                 {/* Portfolio Images */}
                 <div>
-                  <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Portfolio Images *
                   </label>
                   <UploadButton
@@ -322,21 +310,21 @@ export default function CreateCreatorPage() {
                     maxFiles={5}
                     className="w-full"
                   >
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-purple-500 transition-colors">
-                      <ImageIcon className="w-8 h-8 sm:w-12 sm:h-12 mx-auto text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-600">Upload portfolio images (up to 5)</p>
+                    <div className="flex items-center space-x-2">
+                      <ImageIcon className="w-4 h-4" />
+                      <span>Upload Portfolio Images (up to 5)</span>
                     </div>
                   </UploadButton>
                   
                   {formData.portfolioImages.length > 0 && (
                     <div className="mt-4">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                         {formData.portfolioImages.map((image, index) => (
                           <div key={index} className="relative">
                             <img
                               src={image}
                               alt={`Portfolio ${index + 1}`}
-                              className="w-full h-20 sm:h-24 rounded-lg object-cover"
+                              className="w-full h-24 rounded-lg object-cover"
                             />
                             <button
                               onClick={() => removePortfolioImage(index)}
@@ -354,12 +342,12 @@ export default function CreateCreatorPage() {
               </div>
 
               {/* Social Links */}
-              <div className="space-y-4 sm:space-y-6">
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Social Links</h2>
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-gray-900">Social Links</h2>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Twitter/X
                     </label>
                     <input
@@ -367,12 +355,12 @@ export default function CreateCreatorPage() {
                       placeholder="@username"
                       value={formData.socialLinks.twitter}
                       onChange={(e) => handleInputChange('socialLinks.twitter', e.target.value)}
-                      className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Instagram
                     </label>
                     <input
@@ -380,12 +368,12 @@ export default function CreateCreatorPage() {
                       placeholder="@username"
                       value={formData.socialLinks.instagram}
                       onChange={(e) => handleInputChange('socialLinks.instagram', e.target.value)}
-                      className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       YouTube
                     </label>
                     <input
@@ -393,12 +381,12 @@ export default function CreateCreatorPage() {
                       placeholder="Channel URL"
                       value={formData.socialLinks.youtube}
                       onChange={(e) => handleInputChange('socialLinks.youtube', e.target.value)}
-                      className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Website
                     </label>
                     <input
@@ -406,7 +394,7 @@ export default function CreateCreatorPage() {
                       placeholder="https://yourwebsite.com"
                       value={formData.socialLinks.website}
                       onChange={(e) => handleInputChange('socialLinks.website', e.target.value)}
-                      className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
                   </div>
                 </div>
@@ -414,20 +402,21 @@ export default function CreateCreatorPage() {
 
               {/* Create Profile Button */}
               <div className="pt-6 border-t">
-                <CreateProfileButton
-                  profileType="creator"
-                  walletAddress={account?.accountAddress.toString() || ''}
-                  profileData={formData}
-                  onSuccess={(txHash) => {
-                    toast.success('Profile created successfully!', {
-                      description: `Transaction: ${txHash.slice(0, 6)}...${txHash.slice(-4)}`
-                    })
-                  }}
-                  onError={(error) => {
-                    toast.error('Failed to create profile', { description: error })
-                  }}
-                  className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-semibold"
-                />
+                <div className="max-w-md mx-auto">
+                  <CreateProfileButton
+                    profileType="creator"
+                    walletAddress={account?.accountAddress.toString() || ''}
+                    profileData={formData}
+                    onSuccess={(txHash) => {
+                      toast.success('Profile created successfully!', {
+                        description: `Transaction: ${txHash.slice(0, 6)}...${txHash.slice(-4)}`
+                      })
+                    }}
+                    onError={(error) => {
+                      toast.error('Failed to create profile', { description: error })
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>

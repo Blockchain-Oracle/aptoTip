@@ -184,7 +184,7 @@ export function CreateProfileButton({
         return (
           <div className="flex items-center space-x-2">
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Validating profile data...</span>
+            <span className="text-sm sm:text-base">Validating profile data...</span>
           </div>
         );
       
@@ -192,7 +192,7 @@ export function CreateProfileButton({
         return (
           <div className="flex items-center space-x-2">
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span>
+            <span className="text-sm sm:text-base">
               {blockchainProfileExists === false 
                 ? 'Creating profile on blockchain...' 
                 : 'Creating profile...'
@@ -205,7 +205,7 @@ export function CreateProfileButton({
         return (
           <div className="flex items-center space-x-2">
             <CheckCircle className="w-4 h-4 text-green-600" />
-            <span>Profile created successfully!</span>
+            <span className="text-sm sm:text-base">Profile created successfully!</span>
           </div>
         );
       
@@ -213,7 +213,7 @@ export function CreateProfileButton({
         return (
           <div className="flex items-center space-x-2">
             <AlertCircle className="w-4 h-4 text-red-600" />
-            <span>Failed to create profile</span>
+            <span className="text-sm sm:text-base">Failed to create profile</span>
           </div>
         );
       
@@ -225,7 +225,7 @@ export function CreateProfileButton({
             ) : (
               <User className="w-4 h-4" />
             )}
-            <span>Create {profileType} Profile</span>
+            <span className="text-sm sm:text-base">Create {profileType} Profile</span>
             <ArrowRight className="w-4 h-4" />
           </div>
         );
@@ -235,15 +235,15 @@ export function CreateProfileButton({
   const isDisabled = isCreating || !walletAddress || !profileData.name.trim() || !profileData.bio.trim() || !isAuthenticated;
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-4 sm:space-y-6 ${className}`}>
       {/* Wallet Address Display */}
       {walletAddress && (
         <Card className="border-green-200 bg-green-50">
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center space-x-2">
-              <Wallet className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-medium text-green-800">Wallet Address:</span>
-              <span className="text-sm text-green-700 font-mono">
+              <Wallet className="w-4 h-4 text-green-600 flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-medium text-green-800">Wallet Address:</span>
+              <span className="text-xs sm:text-sm text-green-700 font-mono">
                 {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
               </span>
             </div>
@@ -254,26 +254,28 @@ export function CreateProfileButton({
       {/* Blockchain Profile Status */}
       {blockchainProfileExists !== null && (
         <Card className={blockchainProfileExists ? "border-blue-200 bg-blue-50" : "border-yellow-200 bg-yellow-50"}>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-start space-x-2">
               {blockchainProfileExists ? (
-                <CheckCircle className="w-4 h-4 text-blue-600" />
+                <CheckCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
               ) : (
-                <AlertCircle className="w-4 h-4 text-yellow-600" />
+                <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
               )}
-              <span className="text-sm font-medium">
-                {blockchainProfileExists 
-                  ? 'Blockchain profile already exists' 
-                  : 'Blockchain profile will be created'
-                }
-              </span>
+              <div className="min-w-0 flex-1">
+                <span className="text-xs sm:text-sm font-medium block">
+                  {blockchainProfileExists 
+                    ? 'Blockchain profile already exists' 
+                    : 'Blockchain profile will be created'
+                  }
+                </span>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                  {blockchainProfileExists 
+                    ? 'Your profile is already registered on the Aptos blockchain.'
+                    : 'Your profile will be registered on the Aptos blockchain for secure tipping.'
+                  }
+                </p>
+              </div>
             </div>
-            <p className="text-sm text-gray-600 mt-1">
-              {blockchainProfileExists 
-                ? 'Your profile is already registered on the Aptos blockchain.'
-                : 'Your profile will be registered on the Aptos blockchain for secure tipping.'
-              }
-            </p>
           </CardContent>
         </Card>
       )}
@@ -281,8 +283,8 @@ export function CreateProfileButton({
       {/* Authentication Status */}
       {!isAuthenticated && (
         <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          <AlertDescription className="text-sm">
             Please sign in with Google to create your profile on the blockchain.
           </AlertDescription>
         </Alert>
@@ -291,8 +293,8 @@ export function CreateProfileButton({
       {/* Error Display */}
       {error && (
         <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          <AlertDescription className="text-sm">{error}</AlertDescription>
         </Alert>
       )}
 
@@ -304,12 +306,12 @@ export function CreateProfileButton({
           transition={{ duration: 0.3 }}
         >
           <Card className="border-green-200 bg-green-50">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <div>
-                  <h4 className="font-medium text-green-800">Profile Created Successfully!</h4>
-                  <p className="text-sm text-green-700">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-start space-x-2">
+                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-medium text-green-800 text-sm sm:text-base">Profile Created Successfully!</h4>
+                  <p className="text-xs sm:text-sm text-green-700">
                     Your {profileType} profile is now live on AptoTip.
                   </p>
                 </div>
@@ -323,7 +325,7 @@ export function CreateProfileButton({
       <Button
         onClick={handleCreateProfile}
         disabled={isDisabled}
-        className={`w-full h-12 text-lg font-medium transition-all duration-300 ${
+        className={`w-full h-10 sm:h-12 text-sm sm:text-base font-medium transition-all duration-300 ${
           step === 'success' 
             ? 'bg-green-600 hover:bg-green-700' 
             : profileType === 'restaurant'
@@ -357,13 +359,13 @@ export function CreateProfileButton({
           animate={{ opacity: 1, y: 0 }}
           className="space-y-2"
         >
-          <div className="flex justify-between text-sm text-gray-600">
+          <div className="flex justify-between text-xs sm:text-sm text-gray-600">
             <span>Creating your profile...</span>
             <span>{step === 'validating' ? '25%' : step === 'creating' ? '75%' : '100%'}</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
             <motion.div
-              className={`h-2 rounded-full ${
+              className={`h-1.5 sm:h-2 rounded-full ${
                 step === 'validating' ? 'bg-blue-500' : 'bg-green-500'
               }`}
               initial={{ width: 0 }}
@@ -378,12 +380,12 @@ export function CreateProfileButton({
 
       {/* Info Card */}
       <Card className="border-blue-200 bg-blue-50">
-        <CardContent className="p-4">
-          <div className="flex items-start space-x-3">
-            <Sparkles className="w-5 h-5 text-blue-600 mt-0.5" />
-            <div className="space-y-1">
-              <h4 className="font-medium text-blue-800">What happens next?</h4>
-              <ul className="text-sm text-blue-700 space-y-1">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex items-start space-x-2 sm:space-x-3">
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="space-y-1 min-w-0 flex-1">
+              <h4 className="font-medium text-blue-800 text-sm sm:text-base">What happens next?</h4>
+              <ul className="text-xs sm:text-sm text-blue-700 space-y-1">
                 <li>• Your profile will be created in our database</li>
                 {blockchainProfileExists === false && (
                   <li>• Your profile will be registered on the Aptos blockchain</li>

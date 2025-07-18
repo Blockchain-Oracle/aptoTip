@@ -20,7 +20,8 @@ import {
   Wallet,
   Camera,
   Loader2,
-  X
+  X,
+  LogIn
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -54,7 +55,7 @@ const states = [
 
 export default function CreateRestaurantPage() {
   const router = useRouter()
-  const { account, isAuthenticated } = useKeylessAccount()
+  const { account, isAuthenticated, isLoading, createAuthSession, getAuthUrl, error } = useKeylessAccount()
   const createProfile = useCreateProfile()
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({
@@ -73,6 +74,19 @@ export default function CreateRestaurantPage() {
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const handleLogin = async () => {
+    try {
+      console.log('Starting login process...')
+      const ephemeralKeyPair = await createAuthSession()
+      console.log('Created ephemeral key pair:', ephemeralKeyPair)
+      const authUrl = getAuthUrl(ephemeralKeyPair)
+      console.log('Redirecting to:', authUrl)
+      window.location.href = authUrl
+    } catch (error) {
+      console.error('Login error:', error)
+    }
+  }
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -161,8 +175,8 @@ export default function CreateRestaurantPage() {
 
   const progress = (step / 4) * 100
 
-  // Show loading state if not connected
-  if (!isAuthenticated) {
+  // Show loading state while checking authentication
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="container mx-auto px-4 py-8">
@@ -170,6 +184,46 @@ export default function CreateRestaurantPage() {
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">Connecting to your account...</h3>
             <p className="text-gray-600">Please wait while we set up your keyless account</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show login prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="container mx-auto px-4 py-6 sm:py-8 lg:py-12">
+          <div className="max-w-2xl mx-auto text-center">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 lg:mb-6">Create Restaurant Profile</h1>
+            <p className="text-sm sm:text-base lg:text-lg text-gray-600 mb-6 sm:mb-8 lg:mb-12">Sign in to create your restaurant profile and start receiving tips</p>
+            
+            <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8 lg:p-12">
+              <div className="mb-6 lg:mb-8">
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-2 lg:mb-3">Get Started with AptoTip</h2>
+                <p className="text-sm sm:text-base lg:text-lg text-gray-600">Connect your Google account to create your restaurant profile</p>
+              </div>
+              
+              {error && (
+                <div className="mb-4 p-3 lg:p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 text-sm lg:text-base">{error}</p>
+                </div>
+              )}
+              
+              <Button 
+                onClick={handleLogin}
+                className="w-full h-12 lg:h-14 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base lg:text-lg"
+                size="lg"
+              >
+                <LogIn className="w-5 h-5 lg:w-6 lg:h-6 mr-2" />
+                Sign in with Google
+              </Button>
+              
+              <p className="text-xs sm:text-sm lg:text-base text-gray-500 mt-4 lg:mt-6">
+                No crypto knowledge required. We'll set up your keyless account automatically.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -268,34 +322,28 @@ export default function CreateRestaurantPage() {
                           onUploadError={handleUploadError}
                           className="w-full"
                         >
-                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-blue-500 transition-colors">
-                            {formData.imageUrl ? (
-                              <div className="relative">
-                                <Image
-                                  src={formData.imageUrl}
-                                  alt="Profile"
-                                  width={120}
-                                  height={120}
-                                  className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-lg object-cover"
-                                />
-                                <button
-                                  onClick={(e) => {
-                                    e.preventDefault()
-                                    setFormData(prev => ({ ...prev, imageUrl: '' }))
-                                  }}
-                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                                >
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </div>
-                            ) : (
-                              <div>
-                                <Camera className="w-8 h-8 sm:w-12 sm:h-12 mx-auto text-gray-400 mb-2" />
-                                <p className="text-sm text-gray-600">Upload profile image</p>
-                              </div>
-                            )}
+                          <div className="flex items-center space-x-2">
+                            <Camera className="w-4 h-4" />
+                            <span>Upload Profile Image</span>
                           </div>
                         </UploadButton>
+                        {formData.imageUrl && (
+                          <div className="mt-4 relative inline-block">
+                            <Image
+                              src={formData.imageUrl}
+                              alt="Profile"
+                              width={120}
+                              height={120}
+                              className="w-20 h-20 rounded-lg object-cover"
+                            />
+                            <button
+                              onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
                         {errors.imageUrl && <p className="text-sm text-red-600">{errors.imageUrl}</p>}
                       </div>
 
@@ -308,34 +356,28 @@ export default function CreateRestaurantPage() {
                           onUploadError={handleUploadError}
                           className="w-full"
                         >
-                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-blue-500 transition-colors">
-                            {formData.bannerUrl ? (
-                              <div className="relative">
-                                <Image
-                                  src={formData.bannerUrl}
-                                  alt="Banner"
-                                  width={240}
-                                  height={120}
-                                  className="w-full h-20 sm:h-24 mx-auto rounded-lg object-cover"
-                                />
-                                <button
-                                  onClick={(e) => {
-                                    e.preventDefault()
-                                    setFormData(prev => ({ ...prev, bannerUrl: '' }))
-                                  }}
-                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                                >
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </div>
-                            ) : (
-                              <div>
-                                <Camera className="w-8 h-8 sm:w-12 sm:h-12 mx-auto text-gray-400 mb-2" />
-                                <p className="text-sm text-gray-600">Upload banner image</p>
-                              </div>
-                            )}
+                          <div className="flex items-center space-x-2">
+                            <Camera className="w-4 h-4" />
+                            <span>Upload Banner Image</span>
                           </div>
                         </UploadButton>
+                        {formData.bannerUrl && (
+                          <div className="mt-4 relative inline-block">
+                            <Image
+                              src={formData.bannerUrl}
+                              alt="Banner"
+                              width={240}
+                              height={120}
+                              className="w-full h-20 rounded-lg object-cover"
+                            />
+                            <button
+                              onClick={() => setFormData(prev => ({ ...prev, bannerUrl: '' }))}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
                         {errors.bannerUrl && <p className="text-sm text-red-600">{errors.bannerUrl}</p>}
                       </div>
                     </div>
@@ -475,7 +517,7 @@ export default function CreateRestaurantPage() {
                     <p className="text-sm sm:text-base text-gray-600">Review your information before creating your profile</p>
                   </CardHeader>
                   <CardContent className="space-y-4 sm:space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                       <div>
                         <h4 className="font-semibold text-sm sm:text-base mb-3">Profile Information</h4>
                         <div className="space-y-2 text-sm">
@@ -517,17 +559,6 @@ export default function CreateRestaurantPage() {
                         </div>
                       </div>
                     </div>
-
-                    {/* Wallet Info */}
-                    <Alert>
-                      <Wallet className="h-4 w-4" />
-                      <AlertDescription>
-                        Your profile will be created on the Aptos blockchain using your keyless account: 
-                        <span className="font-mono text-xs sm:text-sm ml-1">
-                          {account?.accountAddress.toString().slice(0, 6)}...{account?.accountAddress.toString().slice(-4)}
-                        </span>
-                      </AlertDescription>
-                    </Alert>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -551,20 +582,22 @@ export default function CreateRestaurantPage() {
                   Next
                 </Button>
               ) : (
-                <CreateProfileButton
-                  profileType="restaurant"
-                  walletAddress={account?.accountAddress.toString() || ''}
-                  profileData={formData}
-                  onSuccess={(txHash) => {
-                    toast.success('Profile created successfully!', {
-                      description: `Transaction: ${txHash.slice(0, 6)}...${txHash.slice(-4)}`
-                    })
-                    router.push(`/restaurants/${formData.name.toLowerCase().replace(/\s+/g, '-')}`)
-                  }}
-                  onError={(error) => {
-                    toast.error('Failed to create profile', { description: error })
-                  }}
-                />
+                <div className="w-full max-w-md">
+                  <CreateProfileButton
+                    profileType="restaurant"
+                    walletAddress={account?.accountAddress.toString() || ''}
+                    profileData={formData}
+                    onSuccess={(txHash) => {
+                      toast.success('Profile created successfully!', {
+                        description: `Transaction: ${txHash.slice(0, 6)}...${txHash.slice(-4)}`
+                      })
+                      router.push(`/restaurants/${formData.name.toLowerCase().replace(/\s+/g, '-')}`)
+                    }}
+                    onError={(error) => {
+                      toast.error('Failed to create profile', { description: error })
+                    }}
+                  />
+                </div>
               )}
             </div>
           </div>
