@@ -5,13 +5,14 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { notFound } from 'next/navigation'
 import { use, useState } from 'react'
-import { Users, Heart, Share2, CheckCircle, Instagram, Youtube, Twitter, Globe, Image as ImageIcon, MessageCircle, Edit } from 'lucide-react'
+import { Users, Heart, Share2, CheckCircle, Instagram, Youtube, Twitter, Globe, Image as ImageIcon, MessageCircle, Edit, QrCode } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { QRCodeModal } from '@/components/ui/qr-code-modal'
 import { useProfile, isCreator } from '@/hooks/useProfiles'
 import { useKeylessAccount } from '@/hooks/useKeylessAccount'
 import { formatCurrency, formatCompactNumber } from '@/lib/format'
@@ -29,6 +30,7 @@ export default function CreatorPage({ params }: CreatorPageProps) {
   const { data: creator, isLoading, error } = useProfile(slug)
   const { account, isAuthenticated } = useKeylessAccount()
   const [showAccountSwitcher, setShowAccountSwitcher] = useState(false)
+  const [showQRModal, setShowQRModal] = useState(false)
 
   // Check if current user owns this profile
   const isOwner = isAuthenticated && account && creator && 
@@ -126,6 +128,15 @@ export default function CreatorPage({ params }: CreatorPageProps) {
             </div>
             
             <div className="flex flex-row sm:flex-col space-x-2 sm:space-x-0 sm:space-y-2">
+              <Button 
+                size="sm" 
+                variant="secondary" 
+                className="bg-white/20 hover:bg-white/30 text-white border-white/30 text-xs sm:text-sm"
+                onClick={() => setShowQRModal(true)}
+              >
+                <QrCode className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Share QR</span>
+              </Button>
               <Button size="sm" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-white/30 text-xs sm:text-sm">
                 <Share2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Share</span>
@@ -392,7 +403,7 @@ export default function CreatorPage({ params }: CreatorPageProps) {
             </motion.div>
           )}
 
-          {/* Contact Creator */}
+          {/* QR Code Section */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -400,16 +411,23 @@ export default function CreatorPage({ params }: CreatorPageProps) {
           >
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl">Contact Creator</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">Quick Tip</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full">
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Send Message
-                </Button>
-                <Button variant="outline" className="w-full">
-                  <Heart className="w-4 h-4 mr-2" />
-                  Follow Creator
+              <CardContent className="text-center">
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 mb-4 border border-purple-100">
+                  <div className="w-20 h-20 bg-white rounded-xl shadow-md flex items-center justify-center mx-auto mb-3">
+                    <QrCode className="w-10 h-10 text-purple-600" />
+                  </div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Generate QR Code</h4>
+                  <p className="text-sm text-gray-600">Create beautiful QR codes for sharing</p>
+                </div>
+                <Button 
+                  onClick={() => setShowQRModal(true)}
+                  className="w-full"
+                  variant="outline"
+                >
+                  <QrCode className="w-4 h-4 mr-2" />
+                  Create QR Code
                 </Button>
               </CardContent>
             </Card>
@@ -426,6 +444,13 @@ export default function CreatorPage({ params }: CreatorPageProps) {
           setShowAccountSwitcher(false)
           // Handle sign in logic
         }}
+      />
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        open={showQRModal}
+        onOpenChange={setShowQRModal}
+        creator={creator}
       />
     </div>
   )

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Users, Heart, Grid, List, Instagram, Youtube, Twitter, CheckCircle, Loader2 } from 'lucide-react'
+import { Users, Heart, Grid, List, Instagram, Youtube, Twitter, CheckCircle, Loader2, QrCode } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Header } from '@/components/layouts/header'
+import { QRCodeModal } from '@/components/ui/qr-code-modal'
 import { useCreators, isCreator } from '@/hooks/useProfiles'
 import { formatCurrency, formatCompactNumber } from '@/lib/format'
 import { ROUTES } from '@/lib/constants'
@@ -229,168 +230,227 @@ export default function CreatorsPage() {
 }
 
 function CreatorCard({ creator, index }: { creator: any; index: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1, duration: 0.6 }}
-    >
-      <Card className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
-        <div className="relative h-48 sm:h-56 overflow-hidden">
-          <Image
-            src={creator.bannerUrl || '/images/default-banner.jpg'}
-            alt={creator.name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          
-          {/* Creator Info Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold text-lg sm:text-xl truncate">{creator.name}</h3>
-              {creator.verified && (
-                <Badge className="bg-purple-600 text-xs">
-                  <CheckCircle className="w-3 h-3 mr-1" />
-                  Verified
-                </Badge>
-              )}
-            </div>
-            
-            <div className="flex items-center space-x-2 text-sm mb-2">
-              <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>{formatCompactNumber(creator.followers || 0)} followers</span>
-            </div>
-            
-            <div className="flex items-center space-x-2 text-sm">
-              <Badge variant="secondary" className="bg-white/20 text-white border-white/30 capitalize text-xs">
-                {creator.category}
-              </Badge>
-            </div>
-          </div>
-        </div>
-        
-        <CardContent className="p-4">
-          <p className="text-gray-600 text-sm sm:text-base line-clamp-2 mb-3">
-            {creator.bio || 'No bio available.'}
-          </p>
-          
-          <div className="flex flex-wrap gap-1 mb-4">
-            {creator.tags?.slice(0, 3).map((tag: string) => (
-              <Badge key={tag} variant="secondary" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-            {creator.tags && creator.tags.length > 3 && (
-              <Badge variant="secondary" className="text-xs">
-                +{creator.tags.length - 3}
-              </Badge>
-            )}
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="text-sm sm:text-base">
-              <span className="font-semibold text-green-600">
-                {formatCurrency(creator.totalTips || 0)}
-              </span>
-              <span className="text-gray-500 ml-1">total tips</span>
-            </div>
-            
-            <Button asChild size="sm" className="bg-purple-600 hover:bg-purple-700">
-              <Link href={ROUTES.TIP.CREATOR(creator.slug)}>
-                Send Tip
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  )
-}
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false)
 
-function CreatorListItem({ creator, index }: { creator: any; index: number }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1, duration: 0.6 }}
-    >
-      <Card className="group hover:shadow-lg transition-all duration-300">
-        <CardContent className="p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
-            {/* Creator Image */}
-            <div className="relative w-full sm:w-24 sm:h-24 h-32 rounded-lg overflow-hidden flex-shrink-0">
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.1, duration: 0.6 }}
+      >
+        <Card className="group hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer">
+          {/* Clickable card area for navigation */}
+          <Link href={ROUTES.CREATORS.PROFILE(creator.slug)} className="block">
+            <div className="relative h-48 sm:h-56 overflow-hidden">
               <Image
                 src={creator.bannerUrl || '/images/default-banner.jpg'}
                 alt={creator.name}
                 fill
-                className="object-cover"
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
               />
-            </div>
-            
-            {/* Creator Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-2 sm:space-y-0">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <h3 className="font-semibold text-lg sm:text-xl truncate">{creator.name}</h3>
-                    {creator.verified && (
-                      <Badge className="bg-purple-600 text-xs">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Verified
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
-                    <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>{formatCompactNumber(creator.followers || 0)} followers</span>
-                  </div>
-                  
-                  <p className="text-gray-600 text-sm sm:text-base line-clamp-2 mb-3">
-                    {creator.bio || 'No bio available.'}
-                  </p>
-                  
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {creator.tags?.slice(0, 3).map((tag: string) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                    {creator.tags && creator.tags.length > 3 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{creator.tags.length - 3}
-                      </Badge>
-                    )}
-                  </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              
+              {/* Creator Info Overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-lg sm:text-xl truncate">{creator.name}</h3>
+                  {creator.verified && (
+                    <Badge className="bg-purple-600 text-xs">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Verified
+                    </Badge>
+                  )}
                 </div>
                 
-                {/* Stats and Action */}
-                <div className="flex flex-col sm:items-end space-y-3">
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Badge variant="secondary" className="capitalize text-xs">
-                      {creator.category}
-                    </Badge>
-                  </div>
-                  
-                  <div className="text-sm sm:text-base">
-                    <span className="font-semibold text-green-600">
-                      {formatCurrency(creator.totalTips || 0)}
-                    </span>
-                    <span className="text-gray-500 ml-1">total tips</span>
-                  </div>
-                  
-                  <Button asChild size="sm" className="bg-purple-600 hover:bg-purple-700">
-                    <Link href={ROUTES.TIP.CREATOR(creator.slug)}>
-                      Send Tip
-                    </Link>
-                  </Button>
+                <div className="flex items-center space-x-2 text-sm mb-2">
+                  <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span>{formatCompactNumber(creator.followers || 0)} followers</span>
+                </div>
+                
+                <div className="flex items-center space-x-2 text-sm">
+                  <Badge variant="secondary" className="bg-white/20 text-white border-white/30 capitalize text-xs">
+                    {creator.category}
+                  </Badge>
                 </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+          </Link>
+          
+          <CardContent className="p-4">
+            <Link href={ROUTES.CREATORS.PROFILE(creator.slug)} className="block">
+              <p className="text-gray-600 text-sm sm:text-base line-clamp-2 mb-3">
+                {creator.bio || 'No bio available.'}
+              </p>
+              
+              <div className="flex flex-wrap gap-1 mb-4">
+                {creator.tags?.slice(0, 3).map((tag: string) => (
+                  <Badge key={tag} variant="secondary" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+                {creator.tags && creator.tags.length > 3 && (
+                  <Badge variant="secondary" className="text-xs">
+                    +{creator.tags.length - 3}
+                  </Badge>
+                )}
+              </div>
+            </Link>
+            
+            <div className="flex items-center justify-between">
+              <div className="text-sm sm:text-base">
+                <span className="font-semibold text-green-600">
+                  {formatCurrency(creator.totalTips || 0)}
+                </span>
+                <span className="text-gray-500 ml-1">total tips</span>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setIsQRModalOpen(true)
+                  }}
+                  className="h-8 px-2"
+                >
+                  <QrCode className="w-3 h-3 sm:w-4 sm:h-4" />
+                </Button>
+                <Button asChild size="sm" className="bg-purple-600 hover:bg-purple-700">
+                  <Link href={ROUTES.TIP.CREATOR(creator.slug)}>
+                    Send Tip
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        open={isQRModalOpen}
+        onOpenChange={setIsQRModalOpen}
+        creator={creator}
+      />
+    </>
+  )
+}
+
+function CreatorListItem({ creator, index }: { creator: any; index: number }) {
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false)
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.1, duration: 0.6 }}
+      >
+        <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+              {/* Creator Image */}
+              <Link href={ROUTES.CREATORS.PROFILE(creator.slug)} className="block">
+                <div className="relative w-full sm:w-24 sm:h-24 h-32 rounded-lg overflow-hidden flex-shrink-0">
+                  <Image
+                    src={creator.bannerUrl || '/images/default-banner.jpg'}
+                    alt={creator.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </Link>
+              
+              {/* Creator Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-2 sm:space-y-0">
+                  <div className="flex-1 min-w-0">
+                    <Link href={ROUTES.CREATORS.PROFILE(creator.slug)} className="block">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <h3 className="font-semibold text-lg sm:text-xl truncate">{creator.name}</h3>
+                        {creator.verified && (
+                          <Badge className="bg-purple-600 text-xs">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Verified
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+                        <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>{formatCompactNumber(creator.followers || 0)} followers</span>
+                      </div>
+                      
+                      <p className="text-gray-600 text-sm sm:text-base line-clamp-2 mb-3">
+                        {creator.bio || 'No bio available.'}
+                      </p>
+                      
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {creator.tags?.slice(0, 3).map((tag: string) => (
+                          <Badge key={tag} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                        {creator.tags && creator.tags.length > 3 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{creator.tags.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    </Link>
+                  </div>
+                  
+                  {/* Stats and Action */}
+                  <div className="flex flex-col sm:items-end space-y-3">
+                    <div className="flex items-center space-x-2 text-sm">
+                      <Badge variant="secondary" className="capitalize text-xs">
+                        {creator.category}
+                      </Badge>
+                    </div>
+                    
+                    <div className="text-sm sm:text-base">
+                      <span className="font-semibold text-green-600">
+                        {formatCurrency(creator.totalTips || 0)}
+                      </span>
+                      <span className="text-gray-500 ml-1">total tips</span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setIsQRModalOpen(true)
+                        }}
+                        className="h-8 px-2"
+                      >
+                        <QrCode className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </Button>
+                      <Button asChild size="sm" className="bg-purple-600 hover:bg-purple-700">
+                        <Link href={ROUTES.TIP.CREATOR(creator.slug)}>
+                          Send Tip
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        open={isQRModalOpen}
+        onOpenChange={setIsQRModalOpen}
+        creator={creator}
+      />
+    </>
   )
 }

@@ -258,14 +258,7 @@ export async function seedDatabase() {
     
     // Create blockchain profiles (this will sync with contract)
     console.log('⛓️ Creating blockchain profiles...');
-    console.log('⏭️ Skipping blockchain profile creation - profiles will be created when users sign up');
-    console.log('   Note: Move contract only allows creating profiles for the transaction signer');
-    console.log('   Test profiles will be created in database only');
     
-    // TODO: Blockchain profile creation will happen when real users sign up
-    // The current Move contract only allows creating profiles for the transaction signer
-    // For seeding test data, we'll skip this step
-    /*
     // Import tipping service conditionally to avoid initialization errors
     let tippingService: any = null;
     try {
@@ -276,8 +269,8 @@ export async function seedDatabase() {
       console.log('  ADMIN_PRIVATE_KEY:', process.env.ADMIN_PRIVATE_KEY ? '✅ Set' : '❌ Missing');
       console.log('  NEXT_PUBLIC_APTOS_NETWORK:', process.env.NEXT_PUBLIC_APTOS_NETWORK ? '✅ Set' : '❌ Missing');
       
-      const { tippingService: service } = await import('@/lib/contracts/tipping-service');
-      tippingService = service;
+      const { TippingService } = await import('@/lib/contracts/tipping-service');
+      tippingService = new TippingService();
       console.log('✅ Tipping service imported successfully');
     } catch (error) {
       console.warn('⚠️ Tipping service not available (missing environment variables)');
@@ -285,20 +278,39 @@ export async function seedDatabase() {
       console.warn('   Blockchain profile creation will be skipped');
     }
 
-    if (tippingService) {
-      for (const profile of [...restaurantProfiles, ...creatorProfiles]) {
-        try {
-          const profileType = profile.category === 'restaurant' ? 'restaurant' : 'creator';
-          const txHash = await tippingService.createProfileOnChain(profile.walletAddress, profileType);
-          console.log(`✅ Created blockchain profile for ${profile.name}: ${txHash}`);
-        } catch (error) {
-          console.warn(`⚠️ Failed to create blockchain profile for ${profile.name}:`, error);
+    if (tippingService && process.env.ADMIN_PRIVATE_KEY) {
+      try {
+        // Create admin account from private key
+        const adminAccount = Account.fromPrivateKey({ 
+          privateKey: process.env.ADMIN_PRIVATE_KEY as any 
+        });
+        console.log(`🔑 Using admin account: ${adminAccount.accountAddress.toString()}`);
+        
+        // Fund admin account if needed
+        await fundAccount(aptos, adminAccount.accountAddress.toString(), 1000000000);
+        
+        for (const profile of [...restaurantProfiles, ...creatorProfiles]) {
+          try {
+            const profileType = profile.category === 'restaurant' ? 'restaurant' : 'creator';
+            console.log(`⛓️ Creating blockchain profile for ${profile.name} (${profileType})...`);
+            
+            const txHash = await tippingService.createProfileOnChain(adminAccount, profileType);
+            console.log(`✅ Created blockchain profile for ${profile.name}: ${txHash}`);
+            
+            // Wait a bit between transactions to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } catch (error) {
+            console.warn(`⚠️ Failed to create blockchain profile for ${profile.name}:`, error);
+          }
         }
+      } catch (error) {
+        console.error('❌ Error with admin account setup:', error);
+        console.log('⏭️ Skipping blockchain profile creation due to admin account error');
       }
     } else {
-      console.log('⏭️ Skipping blockchain profile creation (tipping service not available)');
+      console.log('⏭️ Skipping blockchain profile creation (tipping service or admin key not available)');
+      console.log('   To enable blockchain profiles, set ADMIN_PRIVATE_KEY environment variable');
     }
-    */
     
     // Create sample tips with realistic data
     console.log('💸 Creating sample tips...');

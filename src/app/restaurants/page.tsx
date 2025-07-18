@@ -3,13 +3,14 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Star, MapPin, Heart, TrendingUp, Filter, Grid, List, Loader2 } from 'lucide-react'
+import { Star, MapPin, Heart, TrendingUp, Filter, Grid, List, Loader2, Share2, QrCode } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Header } from '@/components/layouts/header'
+import { QRCodeModal } from '@/components/ui/qr-code-modal'
 import { useRestaurants, isRestaurant } from '@/hooks/useProfiles'
 import { formatCurrency } from '@/lib/format'
 import { ROUTES } from '@/lib/constants'
@@ -228,162 +229,221 @@ export default function RestaurantsPage() {
 }
 
 function RestaurantCard({ restaurant, index }: { restaurant: any; index: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1, duration: 0.6 }}
-    >
-      <Card className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
-        <div className="relative h-48 sm:h-56 overflow-hidden">
-          <Image
-            src={restaurant.bannerUrl || '/placeholder-banner.jpg'}
-            alt={restaurant.name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          
-          {/* Restaurant Info Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold text-lg sm:text-xl truncate">{restaurant.name}</h3>
-              {restaurant.verified && (
-                <Badge className="bg-blue-600 text-xs">Verified</Badge>
-              )}
-            </div>
-            
-            <div className="flex items-center space-x-2 text-sm mb-2">
-              <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="truncate">{restaurant.city}, {restaurant.state}</span>
-            </div>
-            
-            <div className="flex items-center space-x-2 text-sm">
-              <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
-              <span>{((restaurant.averageTip || 0) / 100).toFixed(1)}</span>
-              <span className="text-white/80">({restaurant.tipCount || 0} tips)</span>
-            </div>
-          </div>
-        </div>
-        
-        <CardContent className="p-4">
-          <p className="text-gray-600 text-sm sm:text-base line-clamp-2 mb-3">
-            {restaurant.bio}
-          </p>
-          
-          <div className="flex flex-wrap gap-1 mb-4">
-            {restaurant.tags?.slice(0, 3).map((tag: string) => (
-              <Badge key={tag} variant="secondary" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-            {restaurant.tags && restaurant.tags.length > 3 && (
-              <Badge variant="secondary" className="text-xs">
-                +{restaurant.tags.length - 3}
-              </Badge>
-            )}
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="text-sm sm:text-base">
-              <span className="font-semibold text-green-600">
-                {formatCurrency(restaurant.totalTips || 0)}
-              </span>
-              <span className="text-gray-500 ml-1">total tips</span>
-            </div>
-            
-            <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-700">
-              <Link href={ROUTES.TIP.RESTAURANT(restaurant.slug)}>
-                Send Tip
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  )
-}
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false)
 
-function RestaurantListItem({ restaurant, index }: { restaurant: any; index: number }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1, duration: 0.6 }}
-    >
-      <Card className="group hover:shadow-lg transition-all duration-300">
-        <CardContent className="p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
-            {/* Restaurant Image */}
-            <div className="relative w-full sm:w-24 sm:h-24 h-32 rounded-lg overflow-hidden flex-shrink-0">
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.1, duration: 0.6 }}
+      >
+        <Card className="group hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer">
+          {/* Clickable card area for navigation */}
+          <Link href={ROUTES.RESTAURANTS.PROFILE(restaurant.slug)} className="block">
+            <div className="relative h-48 sm:h-56 overflow-hidden">
               <Image
                 src={restaurant.bannerUrl || '/placeholder-banner.jpg'}
                 alt={restaurant.name}
                 fill
-                className="object-cover"
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
               />
-            </div>
-            
-            {/* Restaurant Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-2 sm:space-y-0">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <h3 className="font-semibold text-lg sm:text-xl truncate">{restaurant.name}</h3>
-                    {restaurant.verified && (
-                      <Badge className="bg-blue-600 text-xs">Verified</Badge>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
-                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>{restaurant.city}, {restaurant.state}</span>
-                  </div>
-                  
-                  <p className="text-gray-600 text-sm sm:text-base line-clamp-2 mb-3">
-                    {restaurant.bio}
-                  </p>
-                  
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {restaurant.tags?.slice(0, 3).map((tag: string) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                    {restaurant.tags && restaurant.tags.length > 3 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{restaurant.tags.length - 3}
-                      </Badge>
-                    )}
-                  </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              
+              {/* Restaurant Info Overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-lg sm:text-xl truncate">{restaurant.name}</h3>
+                  {restaurant.verified && (
+                    <Badge className="bg-blue-600 text-xs">Verified</Badge>
+                  )}
                 </div>
                 
-                {/* Stats and Action */}
-                <div className="flex flex-col sm:items-end space-y-3">
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
-                    <span>{((restaurant.averageTip || 0) / 100).toFixed(1)}</span>
-                    <span className="text-gray-500">({restaurant.tipCount || 0} tips)</span>
-                  </div>
-                  
-                  <div className="text-sm sm:text-base">
-                    <span className="font-semibold text-green-600">
-                      {formatCurrency(restaurant.totalTips || 0)}
-                    </span>
-                    <span className="text-gray-500 ml-1">total tips</span>
-                  </div>
-                  
-                  <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-700">
-                    <Link href={ROUTES.TIP.RESTAURANT(restaurant.slug)}>
-                      Send Tip
-                    </Link>
-                  </Button>
+                <div className="flex items-center space-x-2 text-sm mb-2">
+                  <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="truncate">{restaurant.city}, {restaurant.state}</span>
+                </div>
+                
+                <div className="flex items-center space-x-2 text-sm">
+                  <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
+                  <span>{((restaurant.averageTip || 0) / 100).toFixed(1)}</span>
+                  <span className="text-white/80">({restaurant.tipCount || 0} tips)</span>
                 </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+          </Link>
+          
+          <CardContent className="p-4">
+            <Link href={ROUTES.RESTAURANTS.PROFILE(restaurant.slug)} className="block">
+              <p className="text-gray-600 text-sm sm:text-base line-clamp-2 mb-3">
+                {restaurant.bio}
+              </p>
+              
+              <div className="flex flex-wrap gap-1 mb-4">
+                {restaurant.tags?.slice(0, 3).map((tag: string) => (
+                  <Badge key={tag} variant="secondary" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+                {restaurant.tags && restaurant.tags.length > 3 && (
+                  <Badge variant="secondary" className="text-xs">
+                    +{restaurant.tags.length - 3}
+                  </Badge>
+                )}
+              </div>
+            </Link>
+            
+            <div className="flex items-center justify-between">
+              <div className="text-sm sm:text-base">
+                <span className="font-semibold text-green-600">
+                  {formatCurrency(restaurant.totalTips || 0)}
+                </span>
+                <span className="text-gray-500 ml-1">total tips</span>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setIsQRModalOpen(true)
+                  }}
+                  className="h-8 px-2"
+                >
+                  <QrCode className="w-3 h-3 sm:w-4 sm:h-4" />
+                </Button>
+                <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-700">
+                  <Link href={ROUTES.TIP.RESTAURANT(restaurant.slug)}>
+                    Send Tip
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        open={isQRModalOpen}
+        onOpenChange={setIsQRModalOpen}
+        restaurant={restaurant}
+      />
+    </>
+  )
+}
+
+function RestaurantListItem({ restaurant, index }: { restaurant: any; index: number }) {
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false)
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.1, duration: 0.6 }}
+      >
+        <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+              {/* Restaurant Image */}
+              <Link href={ROUTES.RESTAURANTS.PROFILE(restaurant.slug)} className="block">
+                <div className="relative w-full sm:w-24 sm:h-24 h-32 rounded-lg overflow-hidden flex-shrink-0">
+                  <Image
+                    src={restaurant.bannerUrl || '/placeholder-banner.jpg'}
+                    alt={restaurant.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </Link>
+              
+              {/* Restaurant Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-2 sm:space-y-0">
+                  <div className="flex-1 min-w-0">
+                    <Link href={ROUTES.RESTAURANTS.PROFILE(restaurant.slug)} className="block">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <h3 className="font-semibold text-lg sm:text-xl truncate">{restaurant.name}</h3>
+                        {restaurant.verified && (
+                          <Badge className="bg-blue-600 text-xs">Verified</Badge>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+                        <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>{restaurant.city}, {restaurant.state}</span>
+                      </div>
+                      
+                      <p className="text-gray-600 text-sm sm:text-base line-clamp-2 mb-3">
+                        {restaurant.bio}
+                      </p>
+                      
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {restaurant.tags?.slice(0, 3).map((tag: string) => (
+                          <Badge key={tag} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                        {restaurant.tags && restaurant.tags.length > 3 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{restaurant.tags.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    </Link>
+                  </div>
+                  
+                  {/* Stats and Action */}
+                  <div className="flex flex-col sm:items-end space-y-3">
+                    <div className="flex items-center space-x-2 text-sm">
+                      <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
+                      <span>{((restaurant.averageTip || 0) / 100).toFixed(1)}</span>
+                      <span className="text-gray-500">({restaurant.tipCount || 0} tips)</span>
+                    </div>
+                    
+                    <div className="text-sm sm:text-base">
+                      <span className="font-semibold text-green-600">
+                        {formatCurrency(restaurant.totalTips || 0)}
+                      </span>
+                      <span className="text-gray-500 ml-1">total tips</span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setIsQRModalOpen(true)
+                        }}
+                        className="h-8 px-2"
+                      >
+                        <QrCode className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </Button>
+                      <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-700">
+                        <Link href={ROUTES.TIP.RESTAURANT(restaurant.slug)}>
+                          Send Tip
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        open={isQRModalOpen}
+        onOpenChange={setIsQRModalOpen}
+        restaurant={restaurant}
+      />
+    </>
   )
 }

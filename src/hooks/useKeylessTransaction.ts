@@ -34,9 +34,17 @@ export function useKeylessTransaction() {
     setError(null);
 
     try {
-      // Create keyless account from Google token
-      const { createKeylessAccount } = await import('@/lib/keyless');
-      const keylessAccount = await createKeylessAccount(googleIdToken);
+      // Import keyless functions
+      const { authenticateWithGoogle, getLocalEphemeralKeyPair } = await import('@/lib/keyless');
+      
+      // Get the stored ephemeral key pair
+      const ephemeralKeyPair = getLocalEphemeralKeyPair();
+      if (!ephemeralKeyPair) {
+        throw new Error('No ephemeral key pair found. Please authenticate again.');
+      }
+
+      // Create keyless account using the proper authentication flow
+      const keylessAccount = await authenticateWithGoogle(googleIdToken, ephemeralKeyPair);
 
       // Build transaction
       const transaction = await aptos.transaction.build.simple({

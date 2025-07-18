@@ -169,6 +169,9 @@ export function Header({ variant = 'marketing', showSearch = false, user = null 
                             <ListItem href={ROUTES.CREATE.RESTAURANT} title="Create Restaurant Profile" icon={<Sparkles className="w-4 h-4" />}>
                               Start accepting tips instantly
                             </ListItem>
+                            <ListItem href="/qr-demo" title="QR Code Demo" icon={<QrCode className="w-4 h-4" />}>
+                              See beautiful QR codes in action
+                            </ListItem>
                           </ul>
                         </NavigationMenuContent>
                       </NavigationMenuItem>
