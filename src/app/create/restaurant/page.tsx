@@ -183,347 +183,391 @@ export default function CreateRestaurantPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link href="/create" className="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Create</span>
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-sm sm:text-base">Back to Create</span>
             </Link>
             
             <div className="flex items-center space-x-2">
-              <Store className="w-6 h-6 text-blue-600" />
-              <span className="font-semibold text-lg">Create Restaurant Profile</span>
+              <Store className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+              <span className="font-semibold text-base sm:text-lg">Create Restaurant Profile</span>
             </div>
             
-            <div className="w-24"></div> {/* Spacer for centering */}
+            <div className="w-16 sm:w-24"></div> {/* Spacer for centering */}
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
+      <div className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="max-w-4xl mx-auto">
           {/* Progress Bar */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
+          <div className="mb-6 sm:mb-8">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Step {step} of 4</span>
-              <span className="text-sm text-gray-500">{Math.round(progress)}% Complete</span>
+              <span className="text-sm sm:text-base font-medium">Step {step} of 4</span>
+              <span className="text-sm text-gray-600">{Math.round(progress)}% Complete</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <motion.div
-                className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.5 }}
-              />
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              ></div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Step Content */}
-          <motion.div
-            key={step}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div className="space-y-6 sm:space-y-8">
             {step === 1 && (
-              <Card className="border-0 shadow-xl">
-                <CardHeader className="text-center">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Store className="w-8 h-8 text-blue-600" />
-                  </div>
-                  <CardTitle className="text-2xl">Basic Information</CardTitle>
-                  <p className="text-gray-600">Tell us about your restaurant</p>
-                </CardHeader>
-                
-                <CardContent className="space-y-6">
-                  <div>
-                    <Label htmlFor="name">Restaurant Name *</Label>
-                    <Input
-                      id="name"
-                      placeholder="e.g., Mario's Authentic Pizza"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
-                      className={errors.name ? 'border-red-500' : ''}
-                    />
-                    {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="bio">Restaurant Bio *</Label>
-                    <Textarea
-                      id="bio"
-                      placeholder="Describe your restaurant, cuisine, atmosphere, and what makes you special..."
-                      value={formData.bio}
-                      onChange={(e) => handleInputChange('bio', e.target.value)}
-                      rows={4}
-                      className={errors.bio ? 'border-red-500' : ''}
-                    />
-                    <div className="flex justify-between text-sm text-gray-500 mt-1">
-                      <span>{formData.bio.length}/500 characters</span>
-                      <span>Minimum 50 characters</span>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl sm:text-2xl">Basic Information</CardTitle>
+                    <p className="text-sm sm:text-base text-gray-600">Tell us about your restaurant</p>
+                  </CardHeader>
+                  <CardContent className="space-y-4 sm:space-y-6">
+                    {/* Restaurant Name */}
+                    <div className="space-y-2">
+                      <Label htmlFor="name" className="text-sm sm:text-base">Restaurant Name *</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        placeholder="Enter your restaurant name"
+                        className={errors.name ? 'border-red-500' : ''}
+                      />
+                      {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
                     </div>
-                    {errors.bio && <p className="text-red-500 text-sm mt-1">{errors.bio}</p>}
-                  </div>
 
-                  <div>
-                    <Label htmlFor="category">Primary Category</Label>
-                    <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {restaurantCategories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    {/* Bio */}
+                    <div className="space-y-2">
+                      <Label htmlFor="bio" className="text-sm sm:text-base">Bio *</Label>
+                      <Textarea
+                        id="bio"
+                        value={formData.bio}
+                        onChange={(e) => handleInputChange('bio', e.target.value)}
+                        placeholder="Describe your restaurant, cuisine, and what makes it special..."
+                        rows={4}
+                        className={errors.bio ? 'border-red-500' : ''}
+                      />
+                      <p className="text-xs sm:text-sm text-gray-500">
+                        {formData.bio.length}/500 characters (minimum 50)
+                      </p>
+                      {errors.bio && <p className="text-sm text-red-600">{errors.bio}</p>}
+                    </div>
 
-                  {/* Profile Image */}
-                  <div>
-                    <Label>Profile Image *</Label>
-                    {formData.imageUrl ? (
-                      <div className="relative inline-block">
-                        <img
-                          src={formData.imageUrl}
-                          alt="Profile"
-                          className="w-32 h-32 rounded-full object-cover border-2 border-blue-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center"
+                    {/* Images */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                      {/* Profile Image */}
+                      <div className="space-y-2">
+                        <Label className="text-sm sm:text-base">Profile Image *</Label>
+                        <UploadButton
+                          endpoint="profileImage"
+                          onUploadComplete={handleImageUpload('profile')}
+                          onUploadError={handleUploadError}
+                          className="w-full"
                         >
-                          <X className="w-3 h-3" />
-                        </button>
+                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-blue-500 transition-colors">
+                            {formData.imageUrl ? (
+                              <div className="relative">
+                                <Image
+                                  src={formData.imageUrl}
+                                  alt="Profile"
+                                  width={120}
+                                  height={120}
+                                  className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-lg object-cover"
+                                />
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    setFormData(prev => ({ ...prev, imageUrl: '' }))
+                                  }}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div>
+                                <Camera className="w-8 h-8 sm:w-12 sm:h-12 mx-auto text-gray-400 mb-2" />
+                                <p className="text-sm text-gray-600">Upload profile image</p>
+                              </div>
+                            )}
+                          </div>
+                        </UploadButton>
+                        {errors.imageUrl && <p className="text-sm text-red-600">{errors.imageUrl}</p>}
                       </div>
-                    ) : (
-                      <UploadButton
-                        endpoint="profileImage"
-                        onUploadComplete={handleImageUpload('profile')}
-                        onUploadError={handleUploadError}
-                      >
-                        Upload Profile Image
-                      </UploadButton>
-                    )}
-                    {errors.imageUrl && <p className="text-red-500 text-sm mt-1">{errors.imageUrl}</p>}
-                  </div>
 
-                  {/* Banner Image */}
-                  <div>
-                    <Label>Banner Image *</Label>
-                    {formData.bannerUrl ? (
-                      <div className="relative">
-                        <img
-                          src={formData.bannerUrl}
-                          alt="Banner"
-                          className="w-full h-32 rounded-lg object-cover border-2 border-blue-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, bannerUrl: '' }))}
-                          className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center"
+                      {/* Banner Image */}
+                      <div className="space-y-2">
+                        <Label className="text-sm sm:text-base">Banner Image *</Label>
+                        <UploadButton
+                          endpoint="bannerImage"
+                          onUploadComplete={handleImageUpload('banner')}
+                          onUploadError={handleUploadError}
+                          className="w-full"
                         >
-                          <X className="w-3 h-3" />
-                        </button>
+                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-blue-500 transition-colors">
+                            {formData.bannerUrl ? (
+                              <div className="relative">
+                                <Image
+                                  src={formData.bannerUrl}
+                                  alt="Banner"
+                                  width={240}
+                                  height={120}
+                                  className="w-full h-20 sm:h-24 mx-auto rounded-lg object-cover"
+                                />
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    setFormData(prev => ({ ...prev, bannerUrl: '' }))
+                                  }}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div>
+                                <Camera className="w-8 h-8 sm:w-12 sm:h-12 mx-auto text-gray-400 mb-2" />
+                                <p className="text-sm text-gray-600">Upload banner image</p>
+                              </div>
+                            )}
+                          </div>
+                        </UploadButton>
+                        {errors.bannerUrl && <p className="text-sm text-red-600">{errors.bannerUrl}</p>}
                       </div>
-                    ) : (
-                      <UploadButton
-                        endpoint="bannerImage"
-                        onUploadComplete={handleImageUpload('banner')}
-                        onUploadError={handleUploadError}
-                      >
-                        Upload Banner Image
-                      </UploadButton>
-                    )}
-                    {errors.bannerUrl && <p className="text-red-500 text-sm mt-1">{errors.bannerUrl}</p>}
-                  </div>
-                </CardContent>
-              </Card>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             )}
 
             {step === 2 && (
-              <Card className="border-0 shadow-xl">
-                <CardHeader className="text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MapPin className="w-8 h-8 text-green-600" />
-                  </div>
-                  <CardTitle className="text-2xl">Location & Contact</CardTitle>
-                  <p className="text-gray-600">Help customers find your restaurant</p>
-                </CardHeader>
-                
-                <CardContent className="space-y-6">
-                  <div>
-                    <Label htmlFor="address">Street Address *</Label>
-                    <Input
-                      id="address"
-                      placeholder="e.g., 123 Main Street"
-                      value={formData.address}
-                      onChange={(e) => handleInputChange('address', e.target.value)}
-                      className={errors.address ? 'border-red-500' : ''}
-                    />
-                    {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="city">City *</Label>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl sm:text-2xl">Location & Contact</CardTitle>
+                    <p className="text-sm sm:text-base text-gray-600">Help customers find and contact you</p>
+                  </CardHeader>
+                  <CardContent className="space-y-4 sm:space-y-6">
+                    {/* Address */}
+                    <div className="space-y-2">
+                      <Label htmlFor="address" className="text-sm sm:text-base">Street Address *</Label>
                       <Input
-                        id="city"
-                        placeholder="e.g., New York"
-                        value={formData.city}
-                        onChange={(e) => handleInputChange('city', e.target.value)}
-                        className={errors.city ? 'border-red-500' : ''}
+                        id="address"
+                        value={formData.address}
+                        onChange={(e) => handleInputChange('address', e.target.value)}
+                        placeholder="123 Main Street"
+                        className={errors.address ? 'border-red-500' : ''}
                       />
-                      {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
+                      {errors.address && <p className="text-sm text-red-600">{errors.address}</p>}
                     </div>
 
-                    <div>
-                      <Label htmlFor="state">State *</Label>
-                      <Select value={formData.state} onValueChange={(value) => handleInputChange('state', value)}>
-                        <SelectTrigger className={errors.state ? 'border-red-500' : ''}>
-                          <SelectValue placeholder="Select state" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {states.map((state) => (
-                            <SelectItem key={state} value={state}>
-                              {state}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {errors.state && <p className="text-red-500 text-sm mt-1">{errors.state}</p>}
+                    {/* City and State */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="city" className="text-sm sm:text-base">City *</Label>
+                        <Input
+                          id="city"
+                          value={formData.city}
+                          onChange={(e) => handleInputChange('city', e.target.value)}
+                          placeholder="City"
+                          className={errors.city ? 'border-red-500' : ''}
+                        />
+                        {errors.city && <p className="text-sm text-red-600">{errors.city}</p>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="state" className="text-sm sm:text-base">State *</Label>
+                        <Select value={formData.state} onValueChange={(value) => handleInputChange('state', value)}>
+                          <SelectTrigger className={errors.state ? 'border-red-500' : ''}>
+                            <SelectValue placeholder="Select state" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {states.map((state) => (
+                              <SelectItem key={state} value={state}>
+                                {state}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {errors.state && <p className="text-sm text-red-600">{errors.state}</p>}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <Input
-                        id="phone"
-                        placeholder="e.g., (555) 123-4567"
-                        value={formData.phone}
-                        onChange={(e) => handleInputChange('phone', e.target.value)}
-                      />
+                    {/* Phone and Website */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="phone" className="text-sm sm:text-base">Phone Number</Label>
+                        <Input
+                          id="phone"
+                          value={formData.phone}
+                          onChange={(e) => handleInputChange('phone', e.target.value)}
+                          placeholder="(555) 123-4567"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="website" className="text-sm sm:text-base">Website</Label>
+                        <Input
+                          id="website"
+                          value={formData.website}
+                          onChange={(e) => handleInputChange('website', e.target.value)}
+                          placeholder="https://yourrestaurant.com"
+                        />
+                      </div>
                     </div>
-
-                    <div>
-                      <Label htmlFor="website">Website</Label>
-                      <Input
-                        id="website"
-                        placeholder="e.g., https://mariospizza.com"
-                        value={formData.website}
-                        onChange={(e) => handleInputChange('website', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </motion.div>
             )}
 
             {step === 3 && (
-              <Card className="border-0 shadow-xl">
-                <CardHeader className="text-center">
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Clock className="w-8 h-8 text-purple-600" />
-                  </div>
-                  <CardTitle className="text-2xl">Business Hours</CardTitle>
-                  <p className="text-gray-600">Set your restaurant's operating hours</p>
-                </CardHeader>
-                
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
-                      <div key={day} className="flex items-center space-x-4">
-                        <div className="w-24 font-medium">{day}</div>
-                        <Input
-                          placeholder="e.g., 11:00 AM - 10:00 PM or Closed"
-                          value={formData.hours[day] || ''}
-                          onChange={(e) => handleHoursChange(day, e.target.value)}
-                          className="flex-1"
-                        />
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl sm:text-2xl">Categories & Tags</CardTitle>
+                    <p className="text-sm sm:text-base text-gray-600">Help customers discover your restaurant</p>
+                  </CardHeader>
+                  <CardContent className="space-y-4 sm:space-y-6">
+                    <div className="space-y-2">
+                      <Label className="text-sm sm:text-base">Select Categories *</Label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+                        {restaurantCategories.map((category) => (
+                          <button
+                            key={category}
+                            type="button"
+                            onClick={() => handleTagToggle(category)}
+                            className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
+                              formData.tags.includes(category)
+                                ? 'bg-blue-100 border-blue-500 text-blue-700'
+                                : 'bg-white border-gray-300 text-gray-700 hover:border-blue-300'
+                            }`}
+                          >
+                            {category}
+                          </button>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                      {errors.tags && <p className="text-sm text-red-600">{errors.tags}</p>}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             )}
 
             {step === 4 && (
-              <Card className="border-0 shadow-xl">
-                <CardHeader className="text-center">
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Tag className="w-8 h-8 text-purple-600" />
-                  </div>
-                  <CardTitle className="text-2xl">Categories & Tags</CardTitle>
-                  <p className="text-gray-600">Help customers discover your restaurant</p>
-                </CardHeader>
-                
-                <CardContent className="space-y-6">
-                  <div>
-                    <Label>Select Categories *</Label>
-                    <p className="text-sm text-gray-600 mb-4">Choose categories that describe your restaurant</p>
-                    
-                    <div className="grid grid-cols-2 gap-2">
-                      {restaurantCategories.map((tag) => (
-                        <Button
-                          key={tag}
-                          type="button"
-                          variant={formData.tags.includes(tag) ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleTagToggle(tag)}
-                          className="justify-start"
-                        >
-                          {formData.tags.includes(tag) && <CheckCircle className="w-4 h-4 mr-2" />}
-                          {tag}
-                        </Button>
-                      ))}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl sm:text-2xl">Review & Create</CardTitle>
+                    <p className="text-sm sm:text-base text-gray-600">Review your information before creating your profile</p>
+                  </CardHeader>
+                  <CardContent className="space-y-4 sm:space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                      <div>
+                        <h4 className="font-semibold text-sm sm:text-base mb-3">Profile Information</h4>
+                        <div className="space-y-2 text-sm">
+                          <p><strong>Name:</strong> {formData.name}</p>
+                          <p><strong>Bio:</strong> {formData.bio}</p>
+                          <p><strong>Address:</strong> {formData.address}, {formData.city}, {formData.state}</p>
+                          {formData.phone && <p><strong>Phone:</strong> {formData.phone}</p>}
+                          {formData.website && <p><strong>Website:</strong> {formData.website}</p>}
+                          <p><strong>Categories:</strong> {formData.tags.join(', ')}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-sm sm:text-base mb-3">Images</h4>
+                        <div className="space-y-3">
+                          {formData.imageUrl && (
+                            <div>
+                              <p className="text-sm font-medium mb-1">Profile Image:</p>
+                              <Image
+                                src={formData.imageUrl}
+                                alt="Profile"
+                                width={80}
+                                height={80}
+                                className="w-16 h-16 rounded-lg object-cover"
+                              />
+                            </div>
+                          )}
+                          {formData.bannerUrl && (
+                            <div>
+                              <p className="text-sm font-medium mb-1">Banner Image:</p>
+                              <Image
+                                src={formData.bannerUrl}
+                                alt="Banner"
+                                width={160}
+                                height={80}
+                                className="w-full h-16 rounded-lg object-cover"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    {errors.tags && <p className="text-red-500 text-sm mt-2">{errors.tags}</p>}
-                  </div>
 
-                  {/* Profile Creation Section */}
-                  <div className="pt-6 border-t">
-                    <CreateProfileButton
-                      profileType="restaurant"
-                      walletAddress={account?.accountAddress.toString() || ''}
-                      profileData={formData}
-                      onSuccess={(txHash) => {
-                        console.log('Profile created with transaction:', txHash);
-                      }}
-                      onError={(error) => {
-                        console.error('Profile creation failed:', error);
-                      }}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+                    {/* Wallet Info */}
+                    <Alert>
+                      <Wallet className="h-4 w-4" />
+                      <AlertDescription>
+                        Your profile will be created on the Aptos blockchain using your keyless account: 
+                        <span className="font-mono text-xs sm:text-sm ml-1">
+                          {account?.accountAddress.toString().slice(0, 6)}...{account?.accountAddress.toString().slice(-4)}
+                        </span>
+                      </AlertDescription>
+                    </Alert>
+                  </CardContent>
+                </Card>
+              </motion.div>
             )}
-          </motion.div>
+          </div>
 
           {/* Navigation Buttons */}
-          {step < 4 && (
-            <div className="flex justify-between mt-8">
-              <Button
-                variant="outline"
-                onClick={handleBack}
-                disabled={step === 1}
-              >
-                Back
-              </Button>
-              
-              <Button
-                onClick={handleNext}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                Next Step
-              </Button>
+          <div className="flex justify-between mt-6 sm:mt-8">
+            <Button
+              variant="outline"
+              onClick={handleBack}
+              disabled={step === 1}
+              className="px-4 sm:px-6"
+            >
+              Back
+            </Button>
+            
+            <div className="flex space-x-2 sm:space-x-4">
+              {step < 4 ? (
+                <Button onClick={handleNext} className="px-4 sm:px-6">
+                  Next
+                </Button>
+              ) : (
+                <CreateProfileButton
+                  profileType="restaurant"
+                  walletAddress={account?.accountAddress.toString() || ''}
+                  profileData={formData}
+                  onSuccess={(txHash) => {
+                    toast.success('Profile created successfully!', {
+                      description: `Transaction: ${txHash.slice(0, 6)}...${txHash.slice(-4)}`
+                    })
+                    router.push(`/restaurants/${formData.name.toLowerCase().replace(/\s+/g, '-')}`)
+                  }}
+                  onError={(error) => {
+                    toast.error('Failed to create profile', { description: error })
+                  }}
+                />
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

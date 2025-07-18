@@ -78,12 +78,20 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
   // Loading state for params or profile
   if (isLoadingParams || isLoading || authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Loading creator...</h3>
-            <p className="text-gray-600">Getting ready for your tip</p>
+      <div className="container mx-auto px-4 lg:px-6 py-4 sm:py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="animate-pulse space-y-6 sm:space-y-8">
+            <div className="h-64 sm:h-80 bg-gray-200 rounded-xl sm:rounded-2xl"></div>
+            <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
+              <div className="lg:col-span-2 space-y-6 sm:space-y-8">
+                <div className="h-32 bg-gray-200 rounded-lg"></div>
+                <div className="h-64 bg-gray-200 rounded-lg"></div>
+              </div>
+              <div className="space-y-6 sm:space-y-8">
+                <div className="h-48 bg-gray-200 rounded-lg"></div>
+                <div className="h-64 bg-gray-200 rounded-lg"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -91,25 +99,7 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
   }
 
   // Error state
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">😞</div>
-            <h3 className="text-xl font-semibold mb-2">Failed to load creator</h3>
-            <p className="text-gray-600 mb-4">{error.message}</p>
-            <Button onClick={() => window.location.reload()}>
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Not found or not a creator
-  if (!profile || !isCreator(profile)) {
+  if (error || !profile || !isCreator(profile)) {
     notFound()
   }
 
@@ -194,126 +184,90 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Avatar className="w-16 h-16">
-                <AvatarImage src={creator.imageUrl || undefined} alt={creator.name} />
-                <AvatarFallback className="text-lg">
-                  {creator.name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="flex items-center space-x-2 mb-1">
-                  <h1 className="text-2xl font-bold text-gray-900">{creator.name}</h1>
-                  {creator.verified && (
-                    <Badge className="bg-purple-600">
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                      Verified
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
-                  <div className="flex items-center space-x-1">
-                    <Users className="w-4 h-4" />
-                    <span>{formatCompactNumber(creator.followers)} followers</span>
+    <div className="container mx-auto px-4 lg:px-6 py-4 sm:py-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Hero Section */}
+        <motion.div
+          className="relative h-64 sm:h-80 rounded-xl sm:rounded-2xl overflow-hidden mb-6 sm:mb-8"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          <Image
+            src={creator.bannerUrl || '/images/default-banner.jpg'}
+            alt={creator.name}
+            fill
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          
+          {/* Creator Avatar and Info */}
+          <div className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 right-4 sm:right-6 text-white">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between space-y-4 sm:space-y-0">
+              <div className="flex flex-col sm:flex-row sm:items-end space-y-3 sm:space-y-0 sm:space-x-4 lg:space-x-6">
+                <Avatar className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 border-4 border-white self-center sm:self-end">
+                  <AvatarImage src={creator.imageUrl || undefined} alt={creator.name} />
+                  <AvatarFallback className="text-lg sm:text-xl lg:text-2xl">
+                    {creator.name.split(' ').map((n: string) => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div className="flex-1 text-center sm:text-left">
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-2">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold">{creator.name}</h1>
+                    {creator.verified && (
+                      <Badge className="bg-purple-600 text-xs sm:text-sm self-center sm:self-start">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Verified
+                      </Badge>
+                    )}
                   </div>
-                  <Badge variant="secondary" className="capitalize">
-                    {creator.category}
-                  </Badge>
+                  
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mb-3 sm:mb-4">
+                    <div className="flex items-center justify-center sm:justify-start space-x-1">
+                      <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span className="font-semibold text-sm sm:text-base">{formatCompactNumber(creator.followers || 0)}</span>
+                      <span className="text-white/80 text-sm">followers</span>
+                    </div>
+                    
+                    <Badge variant="secondary" className="bg-white/20 text-white border-white/30 capitalize text-xs sm:text-sm self-center sm:self-start">
+                      {creator.category}
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex flex-wrap justify-center sm:justify-start gap-1 sm:gap-2">
+                    {(creator.tags || []).slice(0, 3).map((tag: string) => (
+                      <Badge key={tag} variant="secondary" className="bg-white/20 text-white border-white/30 text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                    {(creator.tags || []).length > 3 && (
+                      <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-xs">
+                        +{(creator.tags || []).length - 3} more
+                      </Badge>
+                    )}
+                  </div>
                 </div>
+              </div>
+              
+              <div className="flex flex-row sm:flex-col space-x-2 sm:space-x-0 sm:space-y-2">
+                <Button size="sm" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-white/30 text-xs sm:text-sm">
+                  <Heart className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Follow</span>
+                </Button>
+                <Button size="sm" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-white/30 text-xs sm:text-sm">
+                  <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Message</span>
+                </Button>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Left Column - Creator Info & Portfolio */}
-          <div className="space-y-6">
-            {/* Creator Details */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <Card>
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="font-semibold text-lg mb-2">About</h3>
-                      <p className="text-gray-700 leading-relaxed">{creator.bio}</p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {(creator.tags || []).map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 text-center p-4 bg-gray-50 rounded-lg">
-                      <div>
-                        <div className="text-2xl font-bold text-purple-600">
-                          {formatCompactNumber(creator.followers || 0)}
-                        </div>
-                        <div className="text-sm text-gray-600">Followers</div>
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold text-green-600">
-                          {formatCurrency(creator.totalTips || 0)}
-                        </div>
-                        <div className="text-sm text-gray-600">Total Tips</div>
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold text-blue-600">{creator.tipCount || 0}</div>
-                        <div className="text-sm text-gray-600">Supporters</div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Social Links */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.6 }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Follow {creator.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-3">
-                    {Object.entries(creator.socialLinks || {}).map(([platform, username]) => {
-                      if (!username) return null
-                      const Icon = getSocialIcon(platform)
-                      return (
-                        <a
-                          key={platform}
-                          href={getSocialUrl(platform, username)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200"
-                        >
-                          <Icon className="w-5 h-5 text-gray-600" />
-                          <span className="font-medium text-sm">{username}</span>
-                        </a>
-                      )
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Portfolio Preview */}
+        <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6 sm:space-y-8">
+            {/* About Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -321,184 +275,278 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
             >
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Portfolio</CardTitle>
+                  <CardTitle className="text-lg sm:text-xl">About {creator.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 gap-3">
-                    {(creator.portfolioImages || []).slice(0, 4).map((image, index) => (
-                      <div key={index} className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer">
-                        <Image
-                          src={image}
-                          alt={`${creator.name} portfolio ${index + 1}`}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-                          <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{creator.bio || 'No bio available.'}</p>
                 </CardContent>
               </Card>
             </motion.div>
 
-            {/* Recent Tips - Removed as it's not in the database schema */}
-          </div>
-
-          {/* Right Column - Tip Form */}
-          <div className="space-y-6">
+            {/* Portfolio Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.6 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
             >
-              <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 sticky top-8">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl text-purple-900">
-                    <Heart className="w-6 h-6 inline mr-2" />
-                    Support {creator.name}
-                  </CardTitle>
-                  <p className="text-purple-700">
-                    Show your appreciation for their content
-                  </p>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg sm:text-xl">Portfolio</CardTitle>
                 </CardHeader>
-                
-                <CardContent className="space-y-6">
-                  {/* Quick Tip Amounts */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-3">
-                      Choose Amount
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {defaultTipAmounts.map((amount) => (
-                        <Button
-                          key={amount}
-                          variant={selectedAmount === amount ? "default" : "outline"}
-                          className={`h-12 text-lg ${
-                            selectedAmount === amount 
-                              ? "bg-purple-600 hover:bg-purple-700" 
-                              : "border-purple-200 hover:border-purple-300"
-                          }`}
-                          onClick={() => handleAmountSelect(amount)}
-                        >
-                          {formatAmountDisplay(amount)}
-                        </Button>
+                <CardContent>
+                  {creator.portfolioImages && creator.portfolioImages.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                      {creator.portfolioImages.map((image, index) => (
+                        <div key={index} className="aspect-square rounded-lg overflow-hidden">
+                          <Image
+                            src={image}
+                            alt={`Portfolio ${index + 1}`}
+                            width={200}
+                            height={200}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform"
+                          />
+                        </div>
                       ))}
                     </div>
-                  </div>
-
-                  {/* Custom Amount */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">
-                      Custom Amount
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                        $
-                      </span>
-                      <Input
-                        type="number"
-                        placeholder="0.00"
-                        value={customAmount}
-                        onChange={(e) => handleCustomAmountChange(e.target.value)}
-                        className="pl-8 h-12 text-lg"
-                        min="1"
-                        step="0.01"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Tip Message */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">
-                      Message for {creator.name} (Optional)
-                    </label>
-                    <Textarea
-                      placeholder="Keep up the amazing work! Love your content 💜"
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      className="resize-none"
-                      rows={3}
-                      maxLength={280}
-                    />
-                    <div className="text-xs text-gray-500 mt-1">
-                      {message.length}/280 characters
-                    </div>
-                  </div>
-
-                  {/* Creator Impact */}
-                  <div className="p-4 bg-white rounded-lg border border-purple-200">
-                    <div className="text-sm text-gray-600 mb-2">💡 Your support helps {creator.name}:</div>
-                    <ul className="text-sm text-gray-700 space-y-1">
-                      <li>• Create better content</li>
-                      <li>• Invest in new equipment</li>
-                      <li>• Dedicate more time to their craft</li>
-                    </ul>
-                  </div>
-
-                  {/* Summary */}
-                  <div className="p-4 bg-white rounded-lg border border-purple-200">
-                    <div className="flex items-center justify-between text-lg font-semibold">
-                      <span>Total Tip:</span>
-                      <span className="text-green-600">{formatAmountDisplay(selectedAmount)}</span>
-                    </div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      Platform fee: FREE (sponsored by Aptos)
-                    </div>
-                  </div>
-
-                  {/* Sign In & Pay Button */}
-                  {!isAuthenticated && !isProcessing && (
-                    <Button
-                      onClick={handleGoogleSignIn}
-                      className="w-full h-14 text-lg bg-purple-600 hover:bg-purple-700"
-                      size="lg"
-                      disabled={selectedAmount < 100} // Minimum $1
-                    >
-                      <LogIn className="w-5 h-5 mr-2" />
-                      Sign in with Google & Send Tip
-                    </Button>
-                  )}
-
-                  {/* Send Tip Button (when authenticated) */}
-                  {isAuthenticated && !isProcessing && (
-                    <Button
-                      onClick={processTip}
-                      className="w-full h-14 text-lg bg-green-600 hover:bg-green-700"
-                      size="lg"
-                      disabled={selectedAmount < 100} // Minimum $1
-                    >
-                      <CreditCard className="w-5 h-5 mr-2" />
-                      Send Tip ({formatAmountDisplay(selectedAmount)})
-                    </Button>
-                  )}
-
-                  {/* Tip Error */}
-                  {tipError && (
-                    <Alert variant="destructive" className="mt-4">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{tipError}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  {/* Processing */}
-                  {isProcessing && (
-                    <div className="text-center p-6">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                      <div className="font-medium">Processing your tip...</div>
-                      <div className="text-sm text-gray-600">This may take a few seconds</div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Play className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p className="text-sm sm:text-base">No portfolio images yet</p>
                     </div>
                   )}
-
-                  {/* Security Note */}
-                  <div className="text-xs text-gray-600 text-center">
-                    <Shield className="w-4 h-4 inline mr-1" />
-                    Secured by Aptos blockchain • No fees • Instant delivery
-                  </div>
                 </CardContent>
               </Card>
             </motion.div>
+
+            {/* Social Links */}
+            {(creator.socialLinks?.twitter || creator.socialLinks?.instagram || creator.socialLinks?.youtube || creator.socialLinks?.website) && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg sm:text-xl">Follow {creator.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                      {creator.socialLinks?.twitter && (
+                        <a 
+                          href={`https://twitter.com/${creator.socialLinks.twitter}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex flex-col items-center space-y-2 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          <Twitter className="w-6 h-6 text-blue-400" />
+                          <span className="text-xs sm:text-sm text-center">Twitter</span>
+                        </a>
+                      )}
+                      {creator.socialLinks?.instagram && (
+                        <a 
+                          href={`https://instagram.com/${creator.socialLinks.instagram}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex flex-col items-center space-y-2 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          <Instagram className="w-6 h-6 text-pink-500" />
+                          <span className="text-xs sm:text-sm text-center">Instagram</span>
+                        </a>
+                      )}
+                      {creator.socialLinks?.youtube && (
+                        <a 
+                          href={creator.socialLinks.youtube}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex flex-col items-center space-y-2 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          <Youtube className="w-6 h-6 text-red-500" />
+                          <span className="text-xs sm:text-sm text-center">YouTube</span>
+                        </a>
+                      )}
+                      {creator.socialLinks?.website && (
+                        <a 
+                          href={creator.socialLinks.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex flex-col items-center space-y-2 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          <Globe className="w-6 h-6 text-gray-500" />
+                          <span className="text-xs sm:text-sm text-center">Website</span>
+                        </a>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Sidebar - Tip Form */}
+          <div className="space-y-6 sm:space-y-8">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+            >
+              <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-purple-900 text-lg sm:text-xl">Support {creator.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 sm:space-y-6">
+                  {!isAuthenticated ? (
+                    <div className="space-y-4">
+                      <div className="text-center">
+                        <div className="text-2xl sm:text-3xl font-bold text-green-600 mb-1">
+                          {formatCurrency(creator.totalTips || 0)}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Total tips received from {creator.tipCount || 0} supporters
+                        </div>
+                      </div>
+                      
+                      <Alert>
+                        <LogIn className="h-4 w-4" />
+                        <AlertDescription className="text-sm">
+                          Sign in to send a tip and support this creator
+                        </AlertDescription>
+                      </Alert>
+                      
+                      <Button 
+                        onClick={handleGoogleSignIn}
+                        className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+                        size="lg"
+                      >
+                        <LogIn className="w-5 h-5 mr-2" />
+                        Sign in to Tip
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 sm:space-y-6">
+                      <div className="text-center">
+                        <div className="text-2xl sm:text-3xl font-bold text-green-600 mb-1">
+                          {formatCurrency(creator.totalTips || 0)}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Total tips received from {creator.tipCount || 0} supporters
+                        </div>
+                      </div>
+                      
+                      {/* Tip Amount Selection */}
+                      <div className="space-y-3">
+                        <label className="text-sm sm:text-base font-medium text-gray-700">Select Tip Amount</label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                          {defaultTipAmounts.map((amount) => (
+                            <button
+                              key={amount}
+                              onClick={() => handleAmountSelect(amount)}
+                              className={`p-3 sm:p-4 text-sm sm:text-base rounded-lg border transition-colors ${
+                                selectedAmount === amount
+                                  ? 'bg-purple-100 border-purple-500 text-purple-700'
+                                  : 'bg-white border-gray-300 text-gray-700 hover:border-purple-300'
+                              }`}
+                            >
+                              {formatAmountDisplay(amount)}
+                            </button>
+                          ))}
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-sm sm:text-base font-medium text-gray-700">Custom Amount</label>
+                          <Input
+                            type="number"
+                            placeholder="Enter amount in USD"
+                            value={customAmount}
+                            onChange={(e) => handleCustomAmountChange(e.target.value)}
+                            className="text-sm sm:text-base"
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Message */}
+                      <div className="space-y-2">
+                        <label className="text-sm sm:text-base font-medium text-gray-700">Message (Optional)</label>
+                        <Textarea
+                          placeholder="Leave a message for the creator..."
+                          value={message}
+                          onChange={(e) => setMessage(e.target.value)}
+                          rows={3}
+                          className="text-sm sm:text-base"
+                        />
+                      </div>
+                      
+                      {/* Error Display */}
+                      {tipError && (
+                        <Alert className="border-red-200 bg-red-50">
+                          <AlertCircle className="h-4 w-4 text-red-600" />
+                          <AlertDescription className="text-sm text-red-700">
+                            {tipError}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      
+                      {/* Send Tip Button */}
+                      <Button 
+                        onClick={processTip}
+                        disabled={isProcessing || selectedAmount <= 0}
+                        className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+                        size="lg"
+                      >
+                        {isProcessing ? (
+                          <>
+                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <Heart className="w-5 h-5 mr-2" />
+                            Send {formatAmountDisplay(selectedAmount)} Tip
+                          </>
+                        )}
+                      </Button>
+                      
+                      {/* Security Note */}
+                      <div className="text-center">
+                        <div className="flex items-center justify-center space-x-1 text-xs text-gray-500">
+                          <Shield className="w-3 h-3" />
+                          <span>Secure blockchain transaction</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Account Info */}
+            {isAuthenticated && account && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg sm:text-xl">Your Account</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span className="text-purple-600 font-semibold text-sm">
+                          {account.accountAddress.toString().slice(2, 4).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm sm:text-base">Keyless Account</p>
+                        <p className="text-xs sm:text-sm text-gray-500 font-mono">
+                          {account.accountAddress.toString().slice(0, 6)}...{account.accountAddress.toString().slice(-4)}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>

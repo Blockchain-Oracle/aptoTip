@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { useState } from 'react'
 import { 
   Heart, 
   Menu, 
@@ -23,7 +24,8 @@ import {
   Coffee,
   Car,
   Sparkles,
-  LogOut
+  LogOut,
+  X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -37,6 +39,13 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 import { ROUTES } from '@/lib/constants'
 import { NetworkIndicator } from '@/components/ui/network-switcher'
 import {
@@ -60,6 +69,8 @@ interface HeaderProps {
 }
 
 export function Header({ variant = 'marketing', showSearch = false, user = null }: HeaderProps) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <div className="container mx-auto px-4 lg:px-6">
@@ -72,11 +83,11 @@ export function Header({ variant = 'marketing', showSearch = false, user = null 
             transition={{ duration: 0.3 }}
           >
             <Link href="/" className="flex items-center space-x-2">
-              <div className="w-10 h-10 flex items-center justify-center">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">
                 <img 
                   src="/image.png" 
                   alt="AptoTip Logo" 
-                  className="w-10 h-10 object-contain"
+                  className="w-12 h-12 sm:w-14 sm:h-14 object-contain"
                 />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -97,7 +108,7 @@ export function Header({ variant = 'marketing', showSearch = false, user = null 
           {/* Search Bar (Public variant) */}
           {showSearch && (
             <motion.div 
-              className="flex-1 max-w-md mx-8"
+              className="flex-1 max-w-md mx-8 hidden md:block"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
@@ -114,14 +125,14 @@ export function Header({ variant = 'marketing', showSearch = false, user = null 
 
           {/* Navigation */}
           <motion.div 
-            className="flex items-center space-x-6"
+            className="flex items-center space-x-4 sm:space-x-6"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
           >
             {variant === 'marketing' && (
               <>
-                <div className="hidden md:flex">
+                <div className="hidden lg:flex">
                   <NavigationMenu>
                     <NavigationMenuList>
                       <NavigationMenuItem>
@@ -204,12 +215,18 @@ export function Header({ variant = 'marketing', showSearch = false, user = null 
                 </div>
                 
                 {!user ? (
-                  <div className="flex items-center space-x-4 ml-4">
-                    <Button asChild variant="outline">
+                  <div className="flex items-center space-x-2 sm:space-x-4 ml-4">
+                    <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
                       <Link href={ROUTES.CREATE.RESTAURANT}>Create Restaurant Profile</Link>
                     </Button>
-                    <Button asChild>
+                    <Button asChild size="sm" className="hidden sm:inline-flex">
                       <Link href={ROUTES.CREATE.CREATOR}>Create Creator Profile</Link>
+                    </Button>
+                    <Button asChild variant="outline" size="sm" className="sm:hidden">
+                      <Link href={ROUTES.CREATE.RESTAURANT}>Restaurant</Link>
+                    </Button>
+                    <Button asChild size="sm" className="sm:hidden">
+                      <Link href={ROUTES.CREATE.CREATOR}>Creator</Link>
                     </Button>
                   </div>
                 ) : (
@@ -220,7 +237,7 @@ export function Header({ variant = 'marketing', showSearch = false, user = null 
 
             {variant === 'public' && (
               <>
-                <div className="hidden md:flex">
+                <div className="hidden lg:flex">
                   <NavigationMenu>
                     <NavigationMenuList>
                       <NavigationMenuItem>
@@ -276,22 +293,200 @@ export function Header({ variant = 'marketing', showSearch = false, user = null 
                   </NavigationMenu>
                 </div>
                 
-                <div className="flex items-center space-x-4">
-                  <Button asChild variant="outline">
+                <div className="flex items-center space-x-2 sm:space-x-4">
+                  <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
                     <Link href={ROUTES.CREATE.RESTAURANT}>Create Restaurant Profile</Link>
                   </Button>
-                  <Button asChild>
+                  <Button asChild size="sm" className="hidden sm:inline-flex">
                     <Link href={ROUTES.CREATE.CREATOR}>Create Creator Profile</Link>
+                  </Button>
+                  <Button asChild variant="outline" size="sm" className="sm:hidden">
+                    <Link href={ROUTES.CREATE.RESTAURANT}>Restaurant</Link>
+                  </Button>
+                  <Button asChild size="sm" className="sm:hidden">
+                    <Link href={ROUTES.CREATE.CREATOR}>Creator</Link>
                   </Button>
                 </div>
               </>
             )}
 
             {/* Mobile Menu Button */}
-            <div className="md:hidden">
-              <Button variant="ghost" size="sm">
-                <Menu className="w-5 h-5" />
-              </Button>
+            <div className="lg:hidden">
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <Menu className="w-5 h-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                  <SheetHeader>
+                    <SheetTitle className="text-left">Menu</SheetTitle>
+                  </SheetHeader>
+                  
+                  {/* Mobile Search */}
+                  {showSearch && (
+                    <div className="mt-6">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Input
+                          placeholder="Search restaurants or creators..."
+                          className="pl-10 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Mobile Navigation */}
+                  <nav className="mt-6 space-y-4">
+                    {/* Restaurants Section */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Restaurants</h3>
+                      <div className="space-y-2">
+                        <Link 
+                          href={ROUTES.RESTAURANTS.LIST}
+                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Store className="w-5 h-5 text-blue-600" />
+                          <span className="text-sm">All Restaurants</span>
+                        </Link>
+                        <Link 
+                          href={ROUTES.RESTAURANTS.CATEGORY('Pizza')}
+                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Utensils className="w-5 h-5 text-orange-600" />
+                          <span className="text-sm">Pizza & Italian</span>
+                        </Link>
+                        <Link 
+                          href={ROUTES.RESTAURANTS.CATEGORY('Sushi')}
+                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Coffee className="w-5 h-5 text-green-600" />
+                          <span className="text-sm">Sushi & Japanese</span>
+                        </Link>
+                        <Link 
+                          href={ROUTES.CREATE.RESTAURANT}
+                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Sparkles className="w-5 h-5 text-blue-600" />
+                          <span className="text-sm">Create Restaurant Profile</span>
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* Creators Section */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Creators</h3>
+                      <div className="space-y-2">
+                        <Link 
+                          href={ROUTES.CREATORS.LIST}
+                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Palette className="w-5 h-5 text-purple-600" />
+                          <span className="text-sm">All Creators</span>
+                        </Link>
+                        <Link 
+                          href={ROUTES.CREATORS.CATEGORY('Music')}
+                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Music className="w-5 h-5 text-pink-600" />
+                          <span className="text-sm">Music</span>
+                        </Link>
+                        <Link 
+                          href={ROUTES.CREATORS.CATEGORY('Art')}
+                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Palette className="w-5 h-5 text-purple-600" />
+                          <span className="text-sm">Digital Art</span>
+                        </Link>
+                        <Link 
+                          href={ROUTES.CREATORS.CATEGORY('Gaming')}
+                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Video className="w-5 h-5 text-red-600" />
+                          <span className="text-sm">Gaming</span>
+                        </Link>
+                        <Link 
+                          href={ROUTES.CREATE.CREATOR}
+                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Sparkles className="w-5 h-5 text-purple-600" />
+                          <span className="text-sm">Create Creator Profile</span>
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* User Actions */}
+                    {!user ? (
+                      <div className="pt-4 border-t">
+                        <div className="space-y-2">
+                          <Button asChild className="w-full" variant="outline">
+                            <Link href={ROUTES.CREATE.RESTAURANT} onClick={() => setMobileMenuOpen(false)}>
+                              Create Restaurant Profile
+                            </Link>
+                          </Button>
+                          <Button asChild className="w-full">
+                            <Link href={ROUTES.CREATE.CREATOR} onClick={() => setMobileMenuOpen(false)}>
+                              Create Creator Profile
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="pt-4 border-t">
+                        <div className="flex items-center space-x-3 p-3">
+                          <Avatar className="w-8 h-8">
+                            <AvatarImage src={user.avatar} alt={user.name} />
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="text-sm font-medium">{user.name}</p>
+                            <p className="text-xs text-gray-500">{user.email}</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2 mt-3">
+                          <Link 
+                            href={`/dashboard/${user.type}`}
+                            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <BarChart3 className="w-4 h-4" />
+                            <span className="text-sm">Dashboard</span>
+                          </Link>
+                          <Link 
+                            href={`/edit/${user.type}/${user.name.toLowerCase().replace(' ', '-')}`}
+                            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <Settings className="w-4 h-4" />
+                            <span className="text-sm">Edit Profile</span>
+                          </Link>
+                          <Link 
+                            href="/account-switch"
+                            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <User className="w-4 h-4" />
+                            <span className="text-sm">Switch Account</span>
+                          </Link>
+                          <button className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors w-full text-left text-red-600">
+                            <LogOut className="w-4 h-4" />
+                            <span className="text-sm">Sign Out</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </nav>
+                </SheetContent>
+              </Sheet>
             </div>
           </motion.div>
         </div>

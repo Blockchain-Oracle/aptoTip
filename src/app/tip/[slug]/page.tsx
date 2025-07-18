@@ -198,12 +198,20 @@ export default function TipPage({ params }: TipPageProps) {
   // Loading state for params or profile
   if (isLoadingParams || isLoading || authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Loading restaurant...</h3>
-            <p className="text-gray-600">Getting ready for your tip</p>
+      <div className="container mx-auto px-4 lg:px-6 py-4 sm:py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="animate-pulse space-y-6 sm:space-y-8">
+            <div className="h-64 sm:h-80 bg-gray-200 rounded-xl sm:rounded-2xl"></div>
+            <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
+              <div className="lg:col-span-2 space-y-6 sm:space-y-8">
+                <div className="h-32 bg-gray-200 rounded-lg"></div>
+                <div className="h-64 bg-gray-200 rounded-lg"></div>
+              </div>
+              <div className="space-y-6 sm:space-y-8">
+                <div className="h-48 bg-gray-200 rounded-lg"></div>
+                <div className="h-64 bg-gray-200 rounded-lg"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -211,148 +219,89 @@ export default function TipPage({ params }: TipPageProps) {
   }
 
   // Error state
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">😞</div>
-            <h3 className="text-xl font-semibold mb-2">Failed to load restaurant</h3>
-            <p className="text-gray-600 mb-4">{error.message}</p>
-            <Button onClick={() => window.location.reload()}>
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Not found or not a restaurant
-  if (!profile || !isRestaurant(profile)) {
+  if (error || !profile || !isRestaurant(profile)) {
     notFound()
   }
 
   const restaurant = profile
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="relative w-12 h-12 rounded-lg overflow-hidden">
-                <Image
-                  src={restaurant.imageUrl || '/placeholder-restaurant.jpg'}
-                  alt={restaurant.name}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">{restaurant.name}</h1>
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <MapPin className="w-4 h-4" />
-                  <span>{restaurant.address}</span>
+    <div className="container mx-auto px-4 lg:px-6 py-4 sm:py-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Hero Section */}
+        <motion.div
+          className="relative h-64 sm:h-80 rounded-xl sm:rounded-2xl overflow-hidden mb-6 sm:mb-8"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          <Image
+            src={restaurant.bannerUrl || '/placeholder-banner.jpg'}
+            alt={restaurant.name}
+            fill
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          
+          {/* Hero Content */}
+          <div className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 right-4 sm:right-6 text-white">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between space-y-3 sm:space-y-0">
+              <div className="flex-1">
+                <div className="flex items-center space-x-2 sm:space-x-3 mb-2">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">{restaurant.name}</h1>
                   {restaurant.verified && (
-                    <Badge className="bg-blue-600 text-xs">
-                      <Shield className="w-3 h-3 mr-1" />
+                    <Badge className="bg-blue-600 text-xs sm:text-sm">
+                      <CheckCircle className="w-3 h-3 mr-1" />
                       Verified
                     </Badge>
                   )}
                 </div>
+                
+                <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mb-3 sm:mb-4">
+                  <div className="flex items-center space-x-1">
+                    <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 fill-current" />
+                    <span className="font-semibold text-sm sm:text-base">{((restaurant.averageTip || 0) / 100).toFixed(1)}</span>
+                    <span className="text-white/80 text-sm">({restaurant.tipCount || 0} tips)</span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-1 text-white/80 text-sm">
+                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span>{restaurant.city}, {restaurant.state}</span>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-1 sm:gap-2">
+                  {restaurant.tags?.slice(0, 3).map((tag) => (
+                    <Badge key={tag} variant="secondary" className="bg-white/20 text-white border-white/30 text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                  {restaurant.tags && restaurant.tags.length > 3 && (
+                    <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-xs">
+                      +{restaurant.tags.length - 3} more
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex flex-row sm:flex-col space-x-2 sm:space-x-0 sm:space-y-2">
+                <Button size="sm" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-white/30 text-xs sm:text-sm">
+                  <Heart className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Save</span>
+                </Button>
+                <Button size="sm" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-white/30 text-xs sm:text-sm">
+                  <Navigation className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Directions</span>
+                </Button>
               </div>
             </div>
-            
-            {/* Location Verification */}
-            {locationVerified !== null && (
-              <div className="flex items-center space-x-2">
-                {locationVerified ? (
-                  <Badge className="bg-green-600">
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Location Verified
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="border-yellow-500 text-yellow-700">
-                    <AlertCircle className="w-3 h-3 mr-1" />
-                    Location Mismatch
-                  </Badge>
-                )}
-              </div>
-            )}
           </div>
-        </div>
-      </div>
+        </motion.div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Left Column - Restaurant Info & Map */}
-          <div className="space-y-6">
-            {/* Restaurant Details */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <Card>
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Star className="w-5 h-5 text-yellow-500 fill-current" />
-                        <span className="font-semibold">{((restaurant.averageTip || 0) / 100).toFixed(1)}</span>
-                        <span className="text-gray-600">({restaurant.tipCount || 0} tips)</span>
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {restaurant.tags?.slice(0, 3).map((tag) => (
-                          <Badge key={tag} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-
-                    <p className="text-gray-700">{restaurant.bio}</p>
-
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      {restaurant.phone && (
-                        <div className="flex items-center space-x-2">
-                          <Phone className="w-4 h-4 text-gray-400" />
-                          <span>{restaurant.phone}</span>
-                        </div>
-                      )}
-                      
-                      {restaurant.website && (
-                        <div className="flex items-center space-x-2">
-                          <Globe className="w-4 h-4 text-gray-400" />
-                          <a 
-                            href={restaurant.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            Website
-                          </a>
-                        </div>
-                      )}
-
-                      <div className="flex items-center space-x-2">
-                        <Clock className="w-4 h-4 text-gray-400" />
-                        <span>Open today</span>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Users className="w-4 h-4 text-gray-400" />
-                        <span>{restaurant.tipCount || 0} supporters</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Google Map */}
+        <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6 sm:space-y-8">
+            {/* About Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -360,228 +309,269 @@ export default function TipPage({ params }: TipPageProps) {
             >
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center text-lg">
-                    <Navigation className="w-5 h-5 mr-2" />
-                    Restaurant Location
-                  </CardTitle>
+                  <CardTitle className="text-lg sm:text-xl">About {restaurant.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="rounded-lg overflow-hidden">
-                    {isLoaded ? (
-                      <GoogleMap
-                        mapContainerStyle={containerStyle}
-                        center={mapCenter}
-                        zoom={16}
-                        options={{
-                          disableDefaultUI: true,
-                          zoomControl: true,
-                          styles: [
-                            {
-                              featureType: 'poi',
-                              elementType: 'labels',
-                              stylers: [{ visibility: 'off' }]
-                            }
-                          ]
-                        }}
-                      >
-                        {/* Restaurant Marker */}
-                        <Marker
-                          position={restaurantLocation}
-                          title={restaurant.name}
-                        />
-                        
-                        {/* User Location Marker */}
-                        {userLocation && (
-                          <Marker
-                            position={userLocation}
-                            title="Your Location"
-                            icon={{
-                              url: '/api/placeholder/20/20', // User location icon
-                              scaledSize: new window.google.maps.Size(20, 20)
-                            }}
-                          />
-                        )}
-                      </GoogleMap>
-                    ) : (
-                      <Skeleton className="w-full h-[200px]" />
+                  <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{restaurant.bio}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Map Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg sm:text-xl">Location</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                      <MapPin className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm sm:text-base">{restaurant.address}</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <MapPin className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm sm:text-base">{restaurant.city}, {restaurant.state}</span>
+                    </div>
+                    
+                    {isLoaded && (
+                      <div className="rounded-lg overflow-hidden border">
+                        <GoogleMap
+                          mapContainerStyle={containerStyle}
+                          center={mapCenter}
+                          zoom={15}
+                        >
+                          <Marker position={restaurantLocation} />
+                        </GoogleMap>
+                      </div>
+                    )}
+                    
+                    {locationVerified !== null && (
+                      <Alert className={locationVerified ? 'border-green-200 bg-green-50' : 'border-yellow-200 bg-yellow-50'}>
+                        <AlertCircle className={`h-4 w-4 ${locationVerified ? 'text-green-600' : 'text-yellow-600'}`} />
+                        <AlertDescription className={`text-sm ${locationVerified ? 'text-green-700' : 'text-yellow-700'}`}>
+                          {locationVerified 
+                            ? 'Location verified! You\'re near this restaurant.' 
+                            : 'You appear to be outside the restaurant area.'
+                          }
+                        </AlertDescription>
+                      </Alert>
                     )}
                   </div>
-                  
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-blue-700 font-medium">{restaurant.address}</span>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          const url = `https://maps.google.com/maps?q=${encodeURIComponent(restaurant.address)}`
-                          window.open(url, '_blank')
-                        }}
-                      >
-                        Get Directions
-                      </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Contact Info */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg sm:text-xl">Contact Info</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {restaurant.phone && (
+                    <div className="flex items-center space-x-3">
+                      <Phone className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm sm:text-base">{restaurant.phone}</span>
                     </div>
-                  </div>
+                  )}
+                  {restaurant.website && (
+                    <div className="flex items-center space-x-3">
+                      <Globe className="w-4 h-4 text-gray-500" />
+                      <a 
+                        href={restaurant.website} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 text-sm sm:text-base"
+                      >
+                        Visit Website
+                      </a>
+                    </div>
+                  )}
+                  {restaurant.hours && (
+                    <div className="flex items-center space-x-3">
+                      <Clock className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm sm:text-base">Check hours on website</span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
           </div>
 
-          {/* Right Column - Tip Form */}
-          <div className="space-y-6">
+          {/* Sidebar - Tip Form */}
+          <div className="space-y-6 sm:space-y-8">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.6 }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
             >
               <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
                 <CardHeader className="text-center">
-                  <CardTitle className="text-2xl text-blue-900">
-                    <Heart className="w-6 h-6 inline mr-2" />
-                    Support {restaurant.name}
-                  </CardTitle>
-                  <p className="text-blue-700">
-                    Show your appreciation with a tip
-                  </p>
+                  <CardTitle className="text-blue-900 text-lg sm:text-xl">Support {restaurant.name}</CardTitle>
                 </CardHeader>
-                
-                <CardContent className="space-y-6">
-                  {/* Quick Tip Amounts */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-3">
-                      Choose Amount
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {defaultTipAmounts.map((amount) => (
-                        <Button
-                          key={amount}
-                          variant={selectedAmount === amount ? "default" : "outline"}
-                          className={`h-12 text-lg ${
-                            selectedAmount === amount 
-                              ? "bg-blue-600 hover:bg-blue-700" 
-                              : "border-blue-200 hover:border-blue-300"
-                          }`}
-                          onClick={() => handleAmountSelect(amount)}
-                        >
-                          {formatAmountDisplay(amount)}
-                        </Button>
-                      ))}
+                <CardContent className="space-y-4 sm:space-y-6">
+                  {!isAuthenticated ? (
+                    <div className="space-y-4">
+                      <div className="text-center">
+                        <div className="text-2xl sm:text-3xl font-bold text-green-600 mb-1">
+                          {formatCurrency(restaurant.totalTips || 0)}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Total tips received from {restaurant.tipCount || 0} supporters
+                        </div>
+                      </div>
+                      
+                      <Alert>
+                        <LogIn className="h-4 w-4" />
+                        <AlertDescription className="text-sm">
+                          Sign in to send a tip and support this restaurant
+                        </AlertDescription>
+                      </Alert>
+                      
+                      <Button 
+                        onClick={handleGoogleSignIn}
+                        className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                        size="lg"
+                      >
+                        <LogIn className="w-5 h-5 mr-2" />
+                        Sign in to Tip
+                      </Button>
                     </div>
-                  </div>
-
-                  {/* Custom Amount */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">
-                      Custom Amount
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                        $
-                      </span>
-                      <Input
-                        type="number"
-                        placeholder="0.00"
-                        value={customAmount}
-                        onChange={(e) => handleCustomAmountChange(e.target.value)}
-                        className="pl-8 h-12 text-lg"
-                        min="1"
-                        step="0.01"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Tip Message */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">
-                      Message (Optional)
-                    </label>
-                    <Textarea
-                      placeholder="Say something nice to the restaurant..."
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      className="resize-none"
-                      rows={3}
-                      maxLength={280}
-                    />
-                    <div className="text-xs text-gray-500 mt-1">
-                      {message.length}/280 characters
-                    </div>
-                  </div>
-
-                  {/* Location Warning */}
-                  {locationVerified === false && (
-                    <Alert className="border-orange-200 bg-orange-50">
-                      <AlertCircle className="h-4 w-4 text-orange-600" />
-                      <AlertDescription className="text-orange-700">
-                        We couldn't verify you're at {restaurant.name}. Tips are still welcome from anywhere!
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {/* Error Display */}
-                  {tipError && (
-                    <Alert className="border-red-200 bg-red-50">
-                      <AlertCircle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-red-700">
-                        {tipError}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {/* Summary */}
-                  <div className="p-4 bg-white rounded-lg border border-blue-200">
-                    <div className="flex items-center justify-between text-lg font-semibold">
-                      <span>Total Tip:</span>
-                      <span className="text-green-600">{formatAmountDisplay(selectedAmount)}</span>
-                    </div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      Platform fee: FREE (sponsored by Aptos)
-                    </div>
-                  </div>
-
-                  {/* Sign In & Pay Button */}
-                  {!isAuthenticated && !isProcessing && (
-                    <Button
-                      onClick={handleGoogleSignIn}
-                      className="w-full h-14 text-lg bg-blue-600 hover:bg-blue-700"
-                      size="lg"
-                      disabled={selectedAmount < 100} // Minimum $1
-                    >
-                      <LogIn className="w-5 h-5 mr-2" />
-                      Sign in with Google & Send Tip
-                    </Button>
-                  )}
-
-                  {/* Send Tip Button (when authenticated) */}
-                  {isAuthenticated && !isProcessing && (
-                    <Button
-                      onClick={processTip}
-                      className="w-full h-14 text-lg bg-green-600 hover:bg-green-700"
-                      size="lg"
-                      disabled={selectedAmount < 100} // Minimum $1
-                    >
-                      <CreditCard className="w-5 h-5 mr-2" />
-                      Send Tip ({formatAmountDisplay(selectedAmount)})
-                    </Button>
-                  )}
-
-                  {/* Processing */}
-                  {isProcessing && (
-                    <div className="text-center p-6">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                      <div className="font-medium">Processing your tip...</div>
-                      <div className="text-sm text-gray-600">This may take a few seconds</div>
+                  ) : (
+                    <div className="space-y-4 sm:space-y-6">
+                      <div className="text-center">
+                        <div className="text-2xl sm:text-3xl font-bold text-green-600 mb-1">
+                          {formatCurrency(restaurant.totalTips || 0)}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Total tips received from {restaurant.tipCount || 0} supporters
+                        </div>
+                      </div>
+                      
+                      {/* Tip Amount Selection */}
+                      <div className="space-y-3">
+                        <label className="text-sm sm:text-base font-medium text-gray-700">Select Tip Amount</label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                          {defaultTipAmounts.map((amount) => (
+                            <button
+                              key={amount}
+                              onClick={() => handleAmountSelect(amount)}
+                              className={`p-3 sm:p-4 text-sm sm:text-base rounded-lg border transition-colors ${
+                                selectedAmount === amount
+                                  ? 'bg-blue-100 border-blue-500 text-blue-700'
+                                  : 'bg-white border-gray-300 text-gray-700 hover:border-blue-300'
+                              }`}
+                            >
+                              {formatAmountDisplay(amount)}
+                            </button>
+                          ))}
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-sm sm:text-base font-medium text-gray-700">Custom Amount</label>
+                          <Input
+                            type="number"
+                            placeholder="Enter amount in USD"
+                            value={customAmount}
+                            onChange={(e) => handleCustomAmountChange(e.target.value)}
+                            className="text-sm sm:text-base"
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Message */}
+                      <div className="space-y-2">
+                        <label className="text-sm sm:text-base font-medium text-gray-700">Message (Optional)</label>
+                        <Textarea
+                          placeholder="Leave a message for the restaurant..."
+                          value={message}
+                          onChange={(e) => setMessage(e.target.value)}
+                          rows={3}
+                          className="text-sm sm:text-base"
+                        />
+                      </div>
+                      
+                      {/* Error Display */}
+                      {tipError && (
+                        <Alert className="border-red-200 bg-red-50">
+                          <AlertCircle className="h-4 w-4 text-red-600" />
+                          <AlertDescription className="text-sm text-red-700">
+                            {tipError}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      
+                      {/* Send Tip Button */}
+                      <Button 
+                        onClick={processTip}
+                        disabled={isProcessing || selectedAmount <= 0}
+                        className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                        size="lg"
+                      >
+                        {isProcessing ? (
+                          <>
+                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <Heart className="w-5 h-5 mr-2" />
+                            Send {formatAmountDisplay(selectedAmount)} Tip
+                          </>
+                        )}
+                      </Button>
+                      
+                      {/* Security Note */}
+                      <div className="text-center">
+                        <div className="flex items-center justify-center space-x-1 text-xs text-gray-500">
+                          <Shield className="w-3 h-3" />
+                          <span>Secure blockchain transaction</span>
+                        </div>
+                      </div>
                     </div>
                   )}
-
-                  {/* Security Note */}
-                  <div className="text-xs text-gray-600 text-center">
-                    <Shield className="w-4 h-4 inline mr-1" />
-                    Secured by Aptos blockchain • No fees • Instant delivery
-                  </div>
                 </CardContent>
               </Card>
             </motion.div>
+
+            {/* Account Info */}
+            {isAuthenticated && account && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg sm:text-xl">Your Account</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 font-semibold text-sm">
+                          {account.accountAddress.toString().slice(2, 4).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm sm:text-base">Keyless Account</p>
+                        <p className="text-xs sm:text-sm text-gray-500 font-mono">
+                          {account.accountAddress.toString().slice(0, 6)}...{account.accountAddress.toString().slice(-4)}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>

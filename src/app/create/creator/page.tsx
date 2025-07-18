@@ -139,15 +139,15 @@ export default function CreateCreatorPage() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-6 sm:py-8">
           <div className="max-w-2xl mx-auto text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Create Creator Profile</h1>
-            <p className="text-gray-600 mb-8">Sign in to create your creator profile and start receiving tips</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">Create Creator Profile</h1>
+            <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8">Sign in to create your creator profile and start receiving tips</p>
             
-            <div className="bg-white rounded-lg shadow-lg p-8">
+            <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
               <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-2">Get Started with AptoTip</h2>
-                <p className="text-gray-600">Connect your Google account to create your creator profile</p>
+                <h2 className="text-lg sm:text-xl font-semibold mb-2">Get Started with AptoTip</h2>
+                <p className="text-sm sm:text-base text-gray-600">Connect your Google account to create your creator profile</p>
               </div>
               
               {error && (
@@ -165,7 +165,7 @@ export default function CreateCreatorPage() {
                 Sign in with Google
               </Button>
               
-              <p className="text-sm text-gray-500 mt-4">
+              <p className="text-xs sm:text-sm text-gray-500 mt-4">
                 No crypto knowledge required. We'll set up your keyless account automatically.
               </p>
             </div>
@@ -177,228 +177,256 @@ export default function CreateCreatorPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4 text-center">Create Creator Profile</h1>
-          <p className="text-gray-600 mb-8 text-center">Set up your creator profile to start receiving tips</p>
+      <div className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 text-center">Create Creator Profile</h1>
+          <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 text-center">Set up your creator profile to start receiving tips</p>
           
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Creator Name *
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., Alice Sterling"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                    errors.name ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Bio *
-                </label>
-                <textarea
-                  placeholder="Tell us about yourself, your content, and what you create..."
-                  rows={4}
-                  value={formData.bio}
-                  onChange={(e) => handleInputChange('bio', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                    errors.bio ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                <div className="flex justify-between text-sm text-gray-500 mt-1">
-                  <span>{formData.bio.length}/500 characters</span>
-                  <span>Minimum 50 characters</span>
+          <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
+            <div className="space-y-6 sm:space-y-8">
+              {/* Basic Information */}
+              <div className="space-y-4 sm:space-y-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Basic Information</h2>
+                
+                <div>
+                  <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                    Creator Name *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Alice Sterling"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    className={`w-full px-3 py-2 sm:py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base ${
+                      errors.name ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
                 </div>
-                {errors.bio && <p className="text-red-500 text-sm mt-1">{errors.bio}</p>}
+
+                <div>
+                  <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                    Bio *
+                  </label>
+                  <textarea
+                    placeholder="Tell us about yourself, your content, and what makes you unique..."
+                    value={formData.bio}
+                    onChange={(e) => handleInputChange('bio', e.target.value)}
+                    rows={4}
+                    className={`w-full px-3 py-2 sm:py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base ${
+                      errors.bio ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                    {formData.bio.length}/500 characters (minimum 50)
+                  </p>
+                  {errors.bio && <p className="text-red-500 text-sm mt-1">{errors.bio}</p>}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <select 
-                  value={formData.category}
-                  onChange={(e) => handleInputChange('category', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="">Select a category</option>
-                  <option value="artist">Artist</option>
-                  <option value="musician">Musician</option>
-                  <option value="writer">Writer</option>
-                  <option value="podcaster">Podcaster</option>
-                  <option value="streamer">Streamer</option>
-                  <option value="educator">Educator</option>
-                  <option value="developer">Developer</option>
-                  <option value="designer">Designer</option>
-                  <option value="photographer">Photographer</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Social Media Links
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://twitter.com/yourusername"
-                  value={formData.socialLinks.twitter}
-                  onChange={(e) => handleInputChange('socialLinks.twitter', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 mb-2"
-                />
-                <input
-                  type="url"
-                  placeholder="https://instagram.com/yourusername"
-                  value={formData.socialLinks.instagram}
-                  onChange={(e) => handleInputChange('socialLinks.instagram', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 mb-2"
-                />
-                <input
-                  type="url"
-                  placeholder="https://youtube.com/@yourchannel"
-                  value={formData.socialLinks.youtube}
-                  onChange={(e) => handleInputChange('socialLinks.youtube', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 mb-2"
-                />
-                <input
-                  type="url"
-                  placeholder="https://yourwebsite.com"
-                  value={formData.socialLinks.website}
-                  onChange={(e) => handleInputChange('socialLinks.website', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              {/* Profile Image */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Profile Image *
-                </label>
-                {formData.imageUrl ? (
-                  <div className="relative inline-block">
-                    <img
-                      src={formData.imageUrl}
-                      alt="Profile"
-                      className="w-32 h-32 rounded-full object-cover border-2 border-purple-200"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center"
+              {/* Images */}
+              <div className="space-y-4 sm:space-y-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Images</h2>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  {/* Profile Image */}
+                  <div>
+                    <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                      Profile Image *
+                    </label>
+                    <UploadButton
+                      endpoint="profileImage"
+                      onUploadComplete={handleImageUpload('profile')}
+                      onUploadError={handleUploadError}
+                      className="w-full"
                     >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ) : (
-                  <UploadButton
-                    endpoint="profileImage"
-                    onUploadComplete={handleImageUpload('profile')}
-                    onUploadError={handleUploadError}
-                  >
-                    Upload Profile Image
-                  </UploadButton>
-                )}
-                {errors.imageUrl && <p className="text-red-500 text-sm mt-1">{errors.imageUrl}</p>}
-              </div>
-
-              {/* Banner Image */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Banner Image *
-                </label>
-                {formData.bannerUrl ? (
-                  <div className="relative">
-                    <img
-                      src={formData.bannerUrl}
-                      alt="Banner"
-                      className="w-full h-32 rounded-lg object-cover border-2 border-purple-200"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, bannerUrl: '' }))}
-                      className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ) : (
-                  <UploadButton
-                    endpoint="bannerImage"
-                    onUploadComplete={handleImageUpload('banner')}
-                    onUploadError={handleUploadError}
-                  >
-                    Upload Banner Image
-                  </UploadButton>
-                )}
-                {errors.bannerUrl && <p className="text-red-500 text-sm mt-1">{errors.bannerUrl}</p>}
-              </div>
-
-              {/* Portfolio Images */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Portfolio Images * (At least 1)
-                </label>
-                {formData.portfolioImages.length > 0 && (
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    {formData.portfolioImages.map((url, index) => (
-                      <div key={index} className="relative">
-                        <img
-                          src={url}
-                          alt={`Portfolio ${index + 1}`}
-                          className="w-full h-24 rounded-lg object-cover border border-gray-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removePortfolioImage(index)}
-                          className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-purple-500 transition-colors">
+                        {formData.imageUrl ? (
+                          <div className="relative">
+                            <img
+                              src={formData.imageUrl}
+                              alt="Profile"
+                              className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-lg object-cover"
+                            />
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setFormData(prev => ({ ...prev, imageUrl: '' }))
+                              }}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div>
+                            <Camera className="w-8 h-8 sm:w-12 sm:h-12 mx-auto text-gray-400 mb-2" />
+                            <p className="text-sm text-gray-600">Upload profile image</p>
+                          </div>
+                        )}
                       </div>
-                    ))}
+                    </UploadButton>
+                    {errors.imageUrl && <p className="text-red-500 text-sm mt-1">{errors.imageUrl}</p>}
                   </div>
-                )}
-                <UploadButton
-                  endpoint="portfolioImages"
-                  onUploadComplete={handleImageUpload('portfolio')}
-                  onUploadError={handleUploadError}
-                  maxFiles={10}
-                >
-                  Add Portfolio Image
-                </UploadButton>
-                {errors.portfolioImages && <p className="text-red-500 text-sm mt-1">{errors.portfolioImages}</p>}
+
+                  {/* Banner Image */}
+                  <div>
+                    <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                      Banner Image *
+                    </label>
+                    <UploadButton
+                      endpoint="bannerImage"
+                      onUploadComplete={handleImageUpload('banner')}
+                      onUploadError={handleUploadError}
+                      className="w-full"
+                    >
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-purple-500 transition-colors">
+                        {formData.bannerUrl ? (
+                          <div className="relative">
+                            <img
+                              src={formData.bannerUrl}
+                              alt="Banner"
+                              className="w-full h-20 sm:h-24 mx-auto rounded-lg object-cover"
+                            />
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setFormData(prev => ({ ...prev, bannerUrl: '' }))
+                              }}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div>
+                            <Camera className="w-8 h-8 sm:w-12 sm:h-12 mx-auto text-gray-400 mb-2" />
+                            <p className="text-sm text-gray-600">Upload banner image</p>
+                          </div>
+                        )}
+                      </div>
+                    </UploadButton>
+                    {errors.bannerUrl && <p className="text-red-500 text-sm mt-1">{errors.bannerUrl}</p>}
+                  </div>
+                </div>
+
+                {/* Portfolio Images */}
+                <div>
+                  <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                    Portfolio Images *
+                  </label>
+                  <UploadButton
+                    endpoint="portfolioImages"
+                    onUploadComplete={handleImageUpload('portfolio')}
+                    onUploadError={handleUploadError}
+                    maxFiles={5}
+                    className="w-full"
+                  >
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-purple-500 transition-colors">
+                      <ImageIcon className="w-8 h-8 sm:w-12 sm:h-12 mx-auto text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-600">Upload portfolio images (up to 5)</p>
+                    </div>
+                  </UploadButton>
+                  
+                  {formData.portfolioImages.length > 0 && (
+                    <div className="mt-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
+                        {formData.portfolioImages.map((image, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={image}
+                              alt={`Portfolio ${index + 1}`}
+                              className="w-full h-20 sm:h-24 rounded-lg object-cover"
+                            />
+                            <button
+                              onClick={() => removePortfolioImage(index)}
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {errors.portfolioImages && <p className="text-red-500 text-sm mt-1">{errors.portfolioImages}</p>}
+                </div>
               </div>
 
-              <div className="pt-6">
+              {/* Social Links */}
+              <div className="space-y-4 sm:space-y-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Social Links</h2>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                      Twitter/X
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="@username"
+                      value={formData.socialLinks.twitter}
+                      onChange={(e) => handleInputChange('socialLinks.twitter', e.target.value)}
+                      className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                      Instagram
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="@username"
+                      value={formData.socialLinks.instagram}
+                      onChange={(e) => handleInputChange('socialLinks.instagram', e.target.value)}
+                      className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                      YouTube
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Channel URL"
+                      value={formData.socialLinks.youtube}
+                      onChange={(e) => handleInputChange('socialLinks.youtube', e.target.value)}
+                      className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+                      Website
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="https://yourwebsite.com"
+                      value={formData.socialLinks.website}
+                      onChange={(e) => handleInputChange('socialLinks.website', e.target.value)}
+                      className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Create Profile Button */}
+              <div className="pt-6 border-t">
                 <CreateProfileButton
                   profileType="creator"
-                  walletAddress={account?.accountAddress?.toString() || ''}
-                  profileData={{
-                    name: formData.name,
-                    bio: formData.bio,
-                    imageUrl: formData.imageUrl,
-                    bannerUrl: formData.bannerUrl,
-                    portfolioImages: formData.portfolioImages,
-                    socialLinks: formData.socialLinks,
-                    followers: 0,
-                    tags: formData.category ? [formData.category] : []
-                  }}
+                  walletAddress={account?.accountAddress.toString() || ''}
+                  profileData={formData}
                   onSuccess={(txHash) => {
-                    console.log('Profile created successfully:', txHash)
-                    toast.success('Creator profile created successfully!')
+                    toast.success('Profile created successfully!', {
+                      description: `Transaction: ${txHash.slice(0, 6)}...${txHash.slice(-4)}`
+                    })
                   }}
                   onError={(error) => {
-                    console.error('Profile creation failed:', error)
                     toast.error('Failed to create profile', { description: error })
                   }}
+                  className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-semibold"
                 />
               </div>
             </div>
