@@ -13,7 +13,12 @@
     "db:studio": "drizzle-kit studio",
     "db:migrate": "drizzle-kit migrate",
     "db:reset": "echo 'Please reset your database manually for Drizzle.'",
-    "db:seed": "dotenv -e .env -- tsx src/lib/db/seed.ts"
+    "db:seed": "dotenv -e .env -- tsx src/lib/db/seed.ts",
+    "db:start": "./scripts/db-setup.sh start",
+    "db:stop": "./scripts/db-setup.sh stop",
+    "db:reset-docker": "./scripts/db-setup.sh reset",
+    "db:status": "./scripts/db-setup.sh status",
+    "db:setup": "./scripts/db-setup.sh setup"
   },
   "dependencies": {
     "@aptos-labs/ts-sdk": "^3.1.3",

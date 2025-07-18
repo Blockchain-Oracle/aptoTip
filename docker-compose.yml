@@ -1,0 +1,23 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: aptotip-postgres
+    environment:
+      POSTGRES_DB: aptotip
+      POSTGRES_USER: aptotip_user
+      POSTGRES_PASSWORD: aptotip_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - aptotip-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  aptotip-network:
+    driver: bridge 

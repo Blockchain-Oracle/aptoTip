@@ -1,6 +1,6 @@
+import { Aptos, Account, AptosConfig, Network } from '@aptos-labs/ts-sdk';
 import { db } from './index';
-import { profiles, restaurants, creators, tips } from './schema';
-import { Account, Aptos, AptosConfig, Network } from '@aptos-labs/ts-sdk';
+import { profiles, restaurants, creators, tips, recentTips } from './schema';
 import { eq } from 'drizzle-orm';
 
 // Realistic restaurant data
@@ -155,7 +155,7 @@ export async function seedDatabase() {
   console.log('🌱 Starting comprehensive database seeding...');
   
   try {
-    // Initialize Aptos client
+    // Initialize Aptos client with correct SDK v3.1.3 syntax
     const config = new AptosConfig({ 
       network: process.env.NEXT_PUBLIC_APTOS_NETWORK === 'mainnet' ? Network.MAINNET : Network.DEVNET 
     });
@@ -266,7 +266,6 @@ export async function seedDatabase() {
       console.log('🔍 Checking environment variables for tipping service...');
       console.log('  NEXT_PUBLIC_CONTRACT_ADDRESS:', process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ? '✅ Set' : '❌ Missing');
       console.log('  NEXT_PUBLIC_CONTRACT_MODULE:', process.env.NEXT_PUBLIC_CONTRACT_MODULE ? '✅ Set' : '❌ Missing');
-      console.log('  ADMIN_PRIVATE_KEY:', process.env.ADMIN_PRIVATE_KEY ? '✅ Set' : '❌ Missing');
       console.log('  NEXT_PUBLIC_APTOS_NETWORK:', process.env.NEXT_PUBLIC_APTOS_NETWORK ? '✅ Set' : '❌ Missing');
       
       const { TippingService } = await import('@/lib/contracts/tipping-service');
@@ -278,19 +277,19 @@ export async function seedDatabase() {
       console.warn('   Blockchain profile creation will be skipped');
     }
 
-    if (tippingService && process.env.ADMIN_PRIVATE_KEY) {
+    if (tippingService) {
       try {
-        // Create admin account from private key
-        const adminAccount = Account.fromPrivateKey({ 
-          privateKey: process.env.ADMIN_PRIVATE_KEY as any 
-        });
-        console.log(`🔑 Using admin account: ${adminAccount.accountAddress.toString()}`);
-        
-        // Fund admin account if needed
-        await fundAccount(aptos, adminAccount.accountAddress.toString(), 1000000000);
-        
+        // Create blockchain profiles for each profile using unique admin accounts
         for (const profile of [...restaurantProfiles, ...creatorProfiles]) {
           try {
+            // Generate a new admin account for each profile (to avoid profile already exists error)
+            console.log(`🔑 Generating new admin account for ${profile.name}...`);
+            const adminAccount = Account.generate();
+            console.log(`🔑 Generated admin account: ${adminAccount.accountAddress.toString()}`);
+            
+            // Fund admin account
+            await fundAccount(aptos, adminAccount.accountAddress.toString(), 1000000000);
+            
             const profileType = profile.category === 'restaurant' ? 'restaurant' : 'creator';
             console.log(`⛓️ Creating blockchain profile for ${profile.name} (${profileType})...`);
             
@@ -308,8 +307,7 @@ export async function seedDatabase() {
         console.log('⏭️ Skipping blockchain profile creation due to admin account error');
       }
     } else {
-      console.log('⏭️ Skipping blockchain profile creation (tipping service or admin key not available)');
-      console.log('   To enable blockchain profiles, set ADMIN_PRIVATE_KEY environment variable');
+      console.log('⏭️ Skipping blockchain profile creation (tipping service not available)');
     }
     
     // Create sample tips with realistic data
