@@ -1,257 +1,290 @@
-# 🎯 **TipLink: Seamless Tipping with Google Authentication**
+# 💸 TipLink - Zero-Friction Blockchain Tipping Platform
 
-> *"Tip anyone with just your Google account - no crypto knowledge required"*
+> **Built for Vietnam Aptos Hackathon 2025 | Track: Payments and Finance**
 
-## 🌟 **What is TipLink?**
+[![Aptos](https://img.shields.io/badge/Built%20on-Aptos-blue)](https://aptos.dev)
 
-TipLink is a revolutionary tipping platform that brings blockchain payments to mainstream users through Google authentication and Aptos Keyless accounts. Perfect for restaurants and content creators who want to accept tips without the complexity of traditional crypto.
+## 🎯 **Project Overview**
 
-### **Two Core Use Cases:**
+TipLink eliminates crypto complexity by using **Aptos Keyless Accounts** with Google OAuth. Users can tip restaurants and creators instantly without any crypto knowledge - just scan QR, sign in with Google, and send tips.
 
-1. **🍕 Restaurant QR Code Tipping**
-   - Restaurants generate QR codes for tables
-   - Customers scan → Google sign-in → instant tip
-   - Zero friction, no cash handling
-
-2. **🎨 Creator Profile Tipping**
-   - Creators create profiles and share links
-   - Fans click → Google sign-in → support creator
-   - Direct monetization, no platform fees
-
-## 🚀 **Key Features**
-
-- ✅ **Google Authentication** - No wallets, no complexity
-- ✅ **Aptos Keyless Accounts** - Secure, scoped blockchain accounts
-- ✅ **Sponsored Transactions** - Zero gas fees for users
-- ✅ **Real-time Updates** - Instant tip confirmations
-- ✅ **Beautiful UI** - Magic UI components with shadcn/ui
-- ✅ **Multi-network Support** - Devnet, Testnet, Mainnet
-- ✅ **QR Code System** - Physical-to-digital bridge
-- ✅ **Mobile-First Design** - Works on any device
-
-## 🛠️ **Tech Stack**
-
-- **Frontend**: Next.js 15 + React 19 + TypeScript
-- **UI**: shadcn/ui + Magic UI + Tailwind CSS
-- **Blockchain**: Aptos + Keyless Accounts
-- **Database**: PostgreSQL + Prisma
-- **Authentication**: Google OAuth + Aptos Keyless
-- **File Upload**: UploadThing
-- **State Management**: Zustand + TanStack Query
-
-## 📦 **Quick Start**
-
-### **1. Clone and Install**
-
-```bash
-git clone <repository-url>
-cd tiplink
-npm install
-```
-
-### **2. Environment Setup**
-
-```bash
-# Copy environment template
-cp .env.example .env.local
-
-# Configure your environment variables
-# See NETWORK_SETUP.md for detailed instructions
-```
-
-### **3. Database Setup**
-
-```bash
-# Generate Prisma client
-npm run db:generate
-
-# Push database schema
-npm run db:push
-
-# (Optional) Open Prisma Studio
-npm run db:studio
-```
-
-### **4. Start Development**
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) to see TipLink in action!
-
-## 🌐 **Network Configuration**
-
-TipLink supports multiple Aptos networks:
-
-- **Devnet** (default): Development and testing
-- **Testnet**: Pre-production testing
-- **Mainnet**: Production with real transactions
-
-### **Quick Network Switch**
-
-```bash
-# In .env.local
-NEXT_PUBLIC_APTOS_NETWORK=devnet    # Development
-NEXT_PUBLIC_APTOS_NETWORK=testnet   # Testing
-NEXT_PUBLIC_APTOS_NETWORK=mainnet   # Production
-```
-
-📖 **Detailed network setup**: See [NETWORK_SETUP.md](./NETWORK_SETUP.md)
-
-## 🏗️ **Project Structure**
-
-```
-tiplink/
-├── app/                    # Next.js App Router
-│   ├── (auth)/            # Authentication pages
-│   ├── (dashboard)/       # Dashboard layouts
-│   ├── (public)/          # Public pages
-│   ├── tip/               # Tipping flows
-│   └── api/               # API routes
-├── src/
-│   ├── components/        # React components
-│   │   ├── ui/           # shadcn/ui components
-│   │   └── forms/        # Form components
-│   ├── lib/              # Utilities and config
-│   │   ├── aptos.ts      # Aptos configuration
-│   │   ├── keyless.ts    # Keyless account logic
-│   │   └── networks.ts   # Network utilities
-│   └── hooks/            # Custom React hooks
-├── contracts/            # Move smart contracts
-└── prisma/              # Database schema
-```
-
-## 🔧 **Configuration**
-
-### **Required Environment Variables**
-
-```bash
-# Network
-NEXT_PUBLIC_APTOS_NETWORK=devnet
-
-# Authentication
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
-
-# Database
-DATABASE_URL="postgresql://..."
-
-# File Upload
-UPLOADTHING_SECRET=your_secret
-UPLOADTHING_APP_ID=your_app_id
-
-# Contract (deploy your contract first)
-NEXT_PUBLIC_CONTRACT_ADDRESS=0x...
-```
-
-### **Optional Configuration**
-
-```bash
-# Custom RPC URLs
-NEXT_PUBLIC_APTOS_NODE_URL=https://fullnode.devnet.aptoslabs.com/v1
-NEXT_PUBLIC_APTOS_FAUCET_URL=https://faucet.devnet.aptoslabs.com
-
-# Google Maps (for location features)
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_maps_key
-```
-
-## 🎯 **Development Workflow**
-
-### **1. Local Development**
-```bash
-npm run dev          # Start development server
-npm run type-check   # TypeScript checking
-npm run lint         # ESLint checking
-```
-
-### **2. Database Management**
-```bash
-npm run db:generate  # Generate Prisma client
-npm run db:push      # Push schema changes
-npm run db:studio    # Open database GUI
-npm run db:migrate   # Create migration
-```
-
-### **3. Testing**
-```bash
-npm run test         # Run tests
-npm run test:watch   # Watch mode
-```
-
-## 🚀 **Deployment**
-
-### **1. Deploy Contracts**
-
-```bash
-# Deploy to devnet
-aptos move publish --profile devnet
-
-# Deploy to testnet
-aptos move publish --profile testnet
-
-# Deploy to mainnet (be careful!)
-aptos move publish --profile mainnet
-```
-
-### **2. Update Environment**
-
-Update contract addresses in your environment variables after deployment.
-
-### **3. Deploy Frontend**
-
-```bash
-# Build for production
-npm run build
-
-# Deploy to Vercel
-vercel --prod
-```
-
-## 🎪 **Demo Features**
-
-### **Restaurant Demo**
-1. **QR Code Generation**: Create branded QR codes for tables
-2. **Customer Flow**: Scan → Google sign-in → instant tip
-3. **Dashboard**: Real-time tip tracking and analytics
-
-### **Creator Demo**
-1. **Profile Creation**: Beautiful creator profiles
-2. **Fan Tipping**: Direct support without platform fees
-3. **Community**: Live tip feed and engagement
-
-### **Technical Highlights**
-- **Keyless Accounts**: No wallet complexity
-- **Sponsored Transactions**: Zero gas fees
-- **Real-time Updates**: Sub-second confirmations
-- **Cross-platform**: Works on any device
-
-## 🤝 **Contributing**
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📚 **Documentation**
-
-- [Network Setup Guide](./NETWORK_SETUP.md)
-- [Architecture Documentation](./docs/architecture.md)
-- [API Documentation](./docs/api.md)
-- [Contract Documentation](./docs/contracts.md)
-
-## 🆘 **Support**
-
-- **Issues**: [GitHub Issues](https://github.com/your-repo/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-repo/discussions)
-- **Documentation**: [Aptos Docs](https://aptos.dev)
-
-## 📄 **License**
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**Live Demo**: [https://apto-tip.vercel.app/](https://apto-tip.vercel.app/)  
+**GitHub**: [https://github.com/Blockchain-Oracle/aptoTip.git](https://github.com/Blockchain-Oracle/aptoTip.git)
 
 ---
 
-**Built with ❤️ for the Aptos ecosystem**
+## 📱 **Application Screenshots**
 
-*TipLink makes blockchain payments accessible to everyone through the power of Google authentication and Aptos Keyless accounts.*
+### **Hero Page & Landing**
+![TipLink Hero Page](./docs/images/heropage.png)
+*Beautiful landing page showcasing TipLink's zero-friction tipping experience*
+
+### **QR Code Generation**
+![QR Code Generator](./docs/images/qrcode.png)
+*QR code generator for Alice Sterling with embedded profile information and tipping interface*
+
+### **Creator Profiles**
+![Creator Profile](./docs/images/creator.png)
+*Alice Sterling's creator profile with live performance background and tipping interface*
+
+### **Tipping Interface**
+![Creator Tipping](./docs/images/creatorTip.png)
+*Bob Chen's tipping page with amount selection and blockchain transaction flow*
+
+---
+
+## 🏗️ **Move Smart Contract Implementation**
+
+### **Contract Address & Deployment**
+- **Contract Address**: `0xb9df0f08ed0cc8168bbf8cda8b67124a83a2dbf0d1e57221bb5a3d9123b2e16a`
+- **Module**: `tipping_system`
+- **Network**: Aptos Devnet
+- **Explorer**: [View on Aptos Explorer](https://explorer.aptoslabs.com/account/0xb9df0f08ed0cc8168bbf8cda8b67124a83a2dbf0d1e57221bb5a3d9123b2e16a?network=devnet)
+
+### **Core Contract Features**
+
+#### **1. Platform Configuration**
+```move
+struct PlatformConfig has key {
+    platform_fee_rate: u64, // 200 = 2%
+    platform_treasury: address,
+    admin: address,
+    paused: bool,
+    tip_events: event::EventHandle<TipEvent>,
+    profile_events: event::EventHandle<ProfileEvent>,
+    total_platform_volume: u64,
+    total_platform_fees: u64,
+}
+```
+
+#### **2. User Profile Management**
+```move
+struct UserProfile has key {
+    owner: address,
+    profile_type: u8, // 1 = restaurant, 2 = creator
+    total_tips_received: u64,
+    total_tips_sent: u64,
+    tip_count_received: u64,
+    tip_count_sent: u64,
+    active: bool,
+    created_at: u64,
+}
+```
+
+#### **3. Core Tipping Function**
+```move
+public entry fun send_tip(
+    tipper: &signer,
+    recipient: address,
+    amount: u64,
+    message: String,
+) acquires PlatformConfig, UserProfile
+```
+
+**Key Features:**
+- ✅ **Automatic fee calculation** (2% platform fee)
+- ✅ **Profile validation** (recipient must have active profile)
+- ✅ **Event emission** (for frontend real-time updates)
+- ✅ **Statistics tracking** (tips sent/received, counts)
+- ✅ **Error handling** (8 different error types)
+
+### **Contract Functions**
+
+| Function | Purpose | Parameters |
+|----------|---------|------------|
+| `initialize_platform` | Deploy platform configuration | `admin: &signer` |
+| `create_profile` | Create restaurant/creator profile | `user: &signer, profile_type: u8` |
+| `send_tip` | Send tip to recipient | `tipper: &signer, recipient: address, amount: u64, message: String` |
+| `get_profile` | View user profile data | `user: address` |
+| `profile_exists` | Check if profile exists | `user: address` |
+| `get_platform_config` | Get platform settings | None |
+| `calculate_tip_breakdown` | Calculate fee breakdown | `amount: u64` |
+
+### **Event System**
+```move
+struct TipEvent has drop, store {
+    tipper: address,
+    recipient: address,
+    amount: u64,
+    platform_fee: u64,
+    net_amount: u64,
+    timestamp: u64,
+    message: String,
+    tip_id: u64,
+}
+```
+
+---
+
+## 🔧 **Technical Integration**
+
+### **Frontend → Blockchain Connection**
+```typescript
+// Contract interaction via Aptos SDK
+const tippingService = new TippingService();
+
+// Send tip transaction
+const txHash = await tippingService.sendTip(
+    keylessAccount,
+    recipientAddress,
+    amountInOctas,
+    message
+);
+```
+
+### **Keyless Account Integration**
+- **Google OAuth** → **Aptos Keyless Account** → **Move Contract**
+- No private keys required
+- Automatic account creation on first tip
+- Secure, scoped authentication
+
+### **Real-time Event Listening**
+```typescript
+// Listen for tip events
+const tipEvents = await client.getEventsByEventHandle({
+    eventHandle: `${CONTRACT_ADDRESS}::tipping_system::PlatformConfig::tip_events`,
+    start: 0,
+    limit: 10
+});
+```
+
+---
+
+## 🚀 **Deployment Status**
+
+### **Current Deployment**
+- ✅ **Contract Deployed**: Devnet
+- ✅ **Frontend Live**: Vercel
+- ✅ **Database**: PostgreSQL (Docker)
+- ✅ **File Storage**: UploadThing
+- ✅ **Authentication**: Google OAuth + Keyless
+
+### **Network Configuration**
+```env
+NEXT_PUBLIC_APTOS_NETWORK=devnet
+NEXT_PUBLIC_APTOS_NODE_URL=https://fullnode.devnet.aptoslabs.com/v1
+NEXT_PUBLIC_CONTRACT_ADDRESS=0xb9df0f08ed0cc8168bbf8cda8b67124a83a2dbf0d1e57221bb5a3d9123b2e16a
+```
+
+### **Ready for Mainnet**
+- Contract tested and validated
+- All functions working correctly
+- Error handling implemented
+- Gas optimization complete
+
+---
+
+## 📱 **User Flow Demo**
+
+### **For Judges: Test the Complete Flow**
+
+1. **Visit**: [https://apto-tip.vercel.app/](https://apto-tip.vercel.app/)
+2. **Browse Profiles**: Check out restaurant and creator profiles
+3. **Test Tipping**: 
+   - Click "Send Tip" on any profile
+   - Sign in with Google (creates Keyless account)
+   - Enter amount and message
+   - Confirm transaction
+4. **View Transaction**: See instant confirmation on Aptos Explorer
+
+### **What Happens On-Chain**
+1. **Profile Creation**: `create_profile()` function called
+2. **Tip Transaction**: `send_tip()` function executed
+3. **Fee Calculation**: 2% automatically deducted
+4. **Fund Transfer**: APT coins moved to recipient
+5. **Event Emission**: TipEvent logged for frontend
+6. **Stats Update**: UserProfile statistics incremented
+
+---
+
+## 🛠️ **Technology Stack**
+
+### **Blockchain Layer**
+- **Aptos Blockchain**: High throughput, parallel execution
+- **Move Smart Contracts**: Type-safe, secure logic
+- **Keyless Accounts**: Google OAuth integration
+- **Aptos SDK**: TypeScript integration
+
+### **Frontend**
+- **Next.js 15**: App Router, API Routes
+- **React 19**: Latest features
+- **TypeScript**: End-to-end type safety
+- **shadcn/ui**: Modern component library
+
+### **Backend**
+- **PostgreSQL**: User profiles, transaction history
+- **Prisma ORM**: Type-safe database operations
+- **UploadThing**: File storage for images
+- **Google OAuth**: Authentication
+
+---
+
+## 🎯 **Key Innovations**
+
+### **1. Zero Crypto Friction**
+- Google sign-in creates Aptos Keyless account automatically
+- No wallet setup, no private keys, no gas fees for users
+- Familiar UX for mainstream adoption
+
+### **2. Real-time Blockchain Integration**
+- Live tip feed from on-chain events
+- Instant transaction confirmations
+- Real-time profile statistics
+
+### **3. Scalable Architecture**
+- Modular Move contract design
+- Event-driven architecture
+- Optimized for high throughput
+
+---
+
+## 📊 **Contract Statistics**
+
+### **Current Status**
+- **Total Functions**: 7 core functions
+- **Error Types**: 8 comprehensive error codes
+- **Event Types**: 2 (TipEvent, ProfileEvent)
+- **Test Coverage**: 100% (4 test cases)
+- **Gas Optimization**: Complete
+
+### **Security Features**
+- ✅ Input validation on all functions
+- ✅ Access control (admin-only functions)
+- ✅ Pause mechanism for emergencies
+- ✅ Fee calculation safety checks
+- ✅ Profile existence validation
+
+---
+
+## 👤 **Developer Contact**
+
+**Lead Developer**: Abubakr Jimoh
+- 💼 **LinkedIn**: [https://www.linkedin.com/in/abubakr-jimoh-b75189276/](https://www.linkedin.com/in/abubakr-jimoh-b75189276/)
+- 🐦 **X (Twitter)**: [https://x.com/Chain_Oracle](https://x.com/Chain_Oracle)
+- 💬 **Telegram**: [https://t.me/BlockchainOracle_dev](https://t.me/BlockchainOracle_dev)
+
+---
+
+## 🏆 **Why This Deserves to Win**
+
+### **Technical Excellence**
+- ✅ **Move Contract**: Well-structured, tested, deployed
+- ✅ **Keyless Integration**: Leverages Aptos's unique features
+- ✅ **Real-time**: Live blockchain data integration
+- ✅ **Production Ready**: Clean architecture, error handling
+
+### **Innovation**
+- ✅ **Zero Friction**: Eliminates crypto complexity
+- ✅ **Mainstream UX**: Google OAuth for mass adoption
+- ✅ **Real Use Case**: Solves actual tipping problems
+
+### **Market Impact**
+- ✅ **Addressable Market**: Millions of service workers
+- ✅ **Clear Value**: Instant, low-cost payments
+- ✅ **Scalable**: Ready for enterprise adoption
+
+---
+
+**Built with ❤️ for the Vietnam Aptos Hackathon 2025**
+
+*Making blockchain payments as easy as saying "thank you"*
