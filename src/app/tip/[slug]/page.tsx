@@ -30,9 +30,10 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useProfile, isRestaurant } from '@/hooks/useProfiles'
+import { TransactionModal } from '@/components/blockchain/TransactionModal'
+import { TransactionOptions } from '@/hooks/useKeylessTransaction'
 import { useKeylessAccount } from '@/hooks/useKeylessAccount'
-import { tippingService } from '@/lib/contracts/tipping-service'
+import { useProfile, isRestaurant } from '@/hooks/useProfiles'
 import { formatCurrency } from '@/lib/format'
 import { ROUTES } from '@/lib/constants'
 
@@ -53,9 +54,18 @@ const defaultTipAmounts = [500, 1000, 2000, 5000] // $5, $10, $20, $50
 export default function TipPage({ params }: TipPageProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { account, isAuthenticated, isLoading: authLoading, createAuthSession, getAuthUrl } = useKeylessAccount()
+  
   const [slug, setSlug] = useState<string>('')
   const [isLoadingParams, setIsLoadingParams] = useState(true)
-  
+  const [selectedAmount, setSelectedAmount] = useState(1000) // Default $10
+  const [customAmount, setCustomAmount] = useState('')
+  const [message, setMessage] = useState('')
+  const [tipError, setTipError] = useState('')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null)
+  const [locationVerified, setLocationVerified] = useState<boolean | null>(null)
+
   // Load params asynchronously
   useEffect(() => {
     const loadParams = async () => {
@@ -73,7 +83,6 @@ export default function TipPage({ params }: TipPageProps) {
   }, [params])
   
   const { data: profile, isLoading, error } = useProfile(slug)
-  const { account, isAuthenticated, isLoading: authLoading, createAuthSession, getAuthUrl } = useKeylessAccount()
 
   // Google Maps setup
   const { isLoaded } = useJsApiLoader({
@@ -81,15 +90,6 @@ export default function TipPage({ params }: TipPageProps) {
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
     libraries: ['places']
   })
-
-  // State management
-  const [selectedAmount, setSelectedAmount] = useState<number>(1000) // Default $10
-  const [customAmount, setCustomAmount] = useState<string>('')
-  const [message, setMessage] = useState<string>('')
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null)
-  const [locationVerified, setLocationVerified] = useState<boolean | null>(null)
-  const [tipError, setTipError] = useState<string>('')
 
   // Mock restaurant coordinates (in real app, these would come from the database)
   const restaurantLocation = {
@@ -144,7 +144,7 @@ export default function TipPage({ params }: TipPageProps) {
 
   const handleCustomAmountChange = (value: string) => {
     setCustomAmount(value)
-    const numValue = parseInt(value) * 100 // Convert dollars to cents
+    const numValue = parseFloat(value) * 100 // Convert dollars to cents
     if (!isNaN(numValue) && numValue > 0) {
       setSelectedAmount(numValue)
     }
@@ -152,43 +152,68 @@ export default function TipPage({ params }: TipPageProps) {
 
   const handleGoogleSignIn = async () => {
     try {
-      setTipError('')
       const ephemeralKeyPair = await createAuthSession()
       const authUrl = getAuthUrl(ephemeralKeyPair)
       window.location.href = authUrl
     } catch (error) {
-      console.error('Login error:', error)
-      setTipError('Failed to start authentication. Please try again.')
+      console.error('Sign in failed:', error)
     }
   }
 
-  const processTip = async () => {
+  const handleSendTip = () => {
     if (!account || !profile) return
     
-    setIsProcessing(true)
-    setTipError('')
-    
-    try {
-      // Convert amount from cents to APT (assuming 1 APT = $10 for demo)
-      const amountInAPT = selectedAmount / 1000 // $10 = 1 APT
-      
-      // Send tip using our TippingService
-      const txHash = await tippingService.sendTip(
-        account,
-        profile.walletAddress,
-        amountInAPT,
-        message || 'Thank you for the great service!'
-      )
-      
-      console.log('Tip sent successfully:', txHash)
-      
-      // Redirect to success page
-      router.push(`${ROUTES.TIP.SUCCESS(slug)}?amount=${selectedAmount}&message=${encodeURIComponent(message)}&txHash=${txHash}`)
-    } catch (error) {
-      console.error('Tip processing failed:', error)
-      setTipError('Failed to send tip. Please try again.')
-      setIsProcessing(false)
+    // Validate amount
+    const finalAmount = customAmount ? parseFloat(customAmount) : selectedAmount
+    if (finalAmount <= 0) {
+      setTipError('Please enter a valid amount')
+      return
     }
+    
+    setTipError('')
+    setIsModalOpen(true)
+  }
+
+  const handleTipSuccess = async (hash: string, tipperAddress?: string) => {
+    console.log('🎯 Tip transaction successful!', { 
+      hash, 
+      tipperAddress, 
+      restaurantId: profile?.id,
+      recipientAddress: profile?.walletAddress,
+      amount: customAmount ? parseFloat(customAmount) : selectedAmount,
+      message 
+    })
+    
+    // Sync blockchain data to database
+    if (profile?.id && profile?.walletAddress) {
+      try {
+        const syncResponse = await fetch('/api/blockchain/sync', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            profileId: profile.id,
+            walletAddress: profile.walletAddress,
+          }),
+        })
+        
+        if (syncResponse.ok) {
+          const syncData = await syncResponse.json()
+          console.log('✅ Database synced successfully:', syncData)
+        } else {
+          console.warn('⚠️ Database sync failed:', await syncResponse.text())
+        }
+      } catch (error) {
+        console.error('❌ Error syncing database:', error)
+      }
+    }
+    
+    // Convert amount from cents to APT for display
+    const amountInAPT = (customAmount ? parseFloat(customAmount) : selectedAmount) / 1000
+    
+    // Redirect to success page
+    router.push(`${ROUTES.TIP.SUCCESS(slug)}?amount=${customAmount ? parseFloat(customAmount) : selectedAmount}&message=${encodeURIComponent(message)}&txHash=${hash}`)
   }
 
   const formatAmountDisplay = (cents: number) => {
@@ -512,22 +537,13 @@ export default function TipPage({ params }: TipPageProps) {
                       
                       {/* Send Tip Button */}
                       <Button 
-                        onClick={processTip}
-                        disabled={isProcessing || selectedAmount <= 0}
+                        onClick={handleSendTip}
+                        disabled={!isAuthenticated || !account || (customAmount ? parseFloat(customAmount) <= 0 : selectedAmount <= 0)}
                         className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                         size="lg"
                       >
-                        {isProcessing ? (
-                          <>
-                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            <Heart className="w-5 h-5 mr-2" />
-                            Send {formatAmountDisplay(selectedAmount)} Tip
-                          </>
-                        )}
+                        <Heart className="w-5 h-5 mr-2" />
+                        Send {formatAmountDisplay(customAmount ? parseFloat(customAmount) * 100 : selectedAmount)} Tip
                       </Button>
                       
                       {/* Security Note */}
@@ -575,6 +591,26 @@ export default function TipPage({ params }: TipPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Transaction Modal */}
+      {profile && (
+        <TransactionModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          transactionOptions={{
+            function: `${process.env.NEXT_PUBLIC_CONTRACT_ADDRESS}::${process.env.NEXT_PUBLIC_CONTRACT_MODULE}::send_tip`,
+            functionArguments: [
+              profile.walletAddress,
+              Math.round((customAmount ? parseFloat(customAmount) : selectedAmount) / 1000 * 100000000), // Convert to octas
+              message || 'Thank you for the great service!'
+            ],
+          }}
+          title="Send Tip"
+          description={`Send a tip to ${profile.name} using your Google account.`}
+          successMessage={`Tip sent successfully to ${profile.name}!`}
+          onSuccess={handleTipSuccess}
+        />
+      )}
     </div>
   )
 }

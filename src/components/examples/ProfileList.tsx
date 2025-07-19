@@ -2,6 +2,7 @@
 
 import { useProfiles, useRestaurants, useCreators, isRestaurant, isCreator } from '@/hooks/useProfiles';
 import { useTips } from '@/hooks/useTips';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -99,11 +100,26 @@ export function ProfileList() {
 
 function ProfileCard({ profile }: { profile: any }) {
   const { data: tips } = useTips(profile.id);
+  const queryClient = useQueryClient();
 
   const handleTipSuccess = (hash: string) => {
     console.log('Tip sent successfully:', hash);
+    
+    // Invalidate and refetch profile data to show updated tip counts
+    queryClient.invalidateQueries({ queryKey: ['profiles'] });
+    queryClient.invalidateQueries({ queryKey: ['profile', profile.id] });
+    queryClient.invalidateQueries({ queryKey: ['tips', profile.id] });
+    
     // You can add toast notification here
   };
+
+  console.log('🎯 ProfileCard: Rendering profile:', { 
+    id: profile.id, 
+    name: profile.name, 
+    walletAddress: profile.walletAddress,
+    totalTips: profile.totalTips,
+    tipCount: profile.tipCount
+  });
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -148,9 +164,10 @@ function ProfileCard({ profile }: { profile: any }) {
           </div>
         )}
 
-        {/* Use the new SendTipButton component */}
+        {/* Use the new SendTipButton component with profileId */}
         <SendTipButton
           recipientAddress={profile.walletAddress}
+          profileId={profile.id} // Pass the profileId for database sync
           amount={5.00}
           message="Great work! 🎉"
           onSuccess={handleTipSuccess}

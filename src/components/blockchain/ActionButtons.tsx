@@ -57,6 +57,7 @@ interface SendTipButtonProps {
   recipientAddress: string;
   amount: number;
   message?: string;
+  profileId?: string; // Add profileId to identify which profile to update
   onSuccess?: (hash: string) => void;
   variant?: 'default' | 'outline' | 'secondary';
   size?: 'default' | 'sm' | 'lg';
@@ -68,6 +69,7 @@ export function SendTipButton({
   recipientAddress, 
   amount, 
   message = '', 
+  profileId,
   onSuccess,
   variant = 'default',
   size = 'default',
@@ -83,6 +85,60 @@ export function SendTipButton({
       Math.round(amount * 100000000), // Convert to octas
       message
     ],
+  };
+
+  const handleSuccess = async (hash: string, tipperAddress?: string) => {
+    console.log('🎯 Tip transaction successful!', { 
+      hash, 
+      tipperAddress, 
+      profileId,
+      recipientAddress,
+      amount,
+      message 
+    });
+    
+    // Call the original success handler
+    onSuccess?.(hash);
+    
+    // If we have a profileId, also update the database
+    if (profileId && tipperAddress) {
+      try {
+        console.log('🔄 Syncing database with blockchain transaction...');
+        console.log('📊 Sync details:', { profileId, amount, message, tipperAddress, hash });
+        
+        // Call the API to update the database
+        const response = await fetch(`/api/profiles/${profileId}/tips`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount,
+            message,
+            tipperAddress: tipperAddress, // Use the actual tipper's address
+            blockchainTxHash: hash, // Pass the transaction hash
+            skipBlockchain: true, // Tell the API to skip blockchain call since we already did it
+          }),
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          console.log('✅ Database synced successfully:', result);
+        } else {
+          const errorText = await response.text();
+          console.error('❌ Failed to sync database:', errorText);
+        }
+      } catch (error) {
+        console.error('❌ Error syncing database:', error);
+      }
+    } else {
+      console.log('⚠️ Skipping database sync - missing profileId or tipperAddress:', { 
+        profileId, 
+        tipperAddress,
+        hasProfileId: !!profileId,
+        hasTipperAddress: !!tipperAddress
+      });
+    }
   };
 
   return (
@@ -105,7 +161,7 @@ export function SendTipButton({
         title="Send Tip"
         description={`Send a tip of $${amount.toFixed(2)} to this creator using your Google account.`}
         successMessage={`Tip of $${amount.toFixed(2)} sent successfully!`}
-        onSuccess={onSuccess}
+        onSuccess={handleSuccess}
       />
     </>
   );

@@ -29,9 +29,11 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useProfile, isCreator } from '@/hooks/useProfiles'
+import { TransactionModal } from '@/components/blockchain/TransactionModal'
+import { TransactionOptions } from '@/hooks/useKeylessTransaction'
+import { useGoogleAuth } from '@/hooks/useGoogleAuth'
 import { useKeylessAccount } from '@/hooks/useKeylessAccount'
-import { tippingService } from '@/lib/contracts/tipping-service'
+import { useProfile, isCreator } from '@/hooks/useProfiles'
 import { formatCurrency, formatCompactNumber } from '@/lib/format'
 import { ROUTES } from '@/lib/constants'
 
@@ -46,9 +48,18 @@ const defaultTipAmounts = [500, 1000, 2000, 5000] // $5, $10, $20, $50
 
 export default function CreatorTipPage({ params }: CreatorTipPageProps) {
   const router = useRouter()
+  const { user, signIn } = useGoogleAuth()
+  const { account } = useKeylessAccount()
+  
   const [slug, setSlug] = useState<string>('')
   const [isLoadingParams, setIsLoadingParams] = useState(true)
-  
+  const [selectedAmount, setSelectedAmount] = useState(500) // $5.00 default
+  const [customAmount, setCustomAmount] = useState('')
+  const [message, setMessage] = useState('')
+  const [tipError, setTipError] = useState('')
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
   // Load params asynchronously
   useEffect(() => {
     const loadParams = async () => {
@@ -66,14 +77,7 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
   }, [params])
   
   const { data: profile, isLoading, error } = useProfile(slug)
-  const { account, isAuthenticated, isLoading: authLoading, createAuthSession, getAuthUrl } = useKeylessAccount()
-
-  // State management
-  const [selectedAmount, setSelectedAmount] = useState<number>(1000) // Default $10
-  const [customAmount, setCustomAmount] = useState<string>('')
-  const [message, setMessage] = useState<string>('')
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [tipError, setTipError] = useState<string>('')
+  const { isAuthenticated, isLoading: authLoading } = useKeylessAccount()
 
   // Loading state for params or profile
   if (isLoadingParams || isLoading || authLoading) {
@@ -112,7 +116,7 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
 
   const handleCustomAmountChange = (value: string) => {
     setCustomAmount(value)
-    const numValue = parseInt(value) * 100 // Convert dollars to cents
+    const numValue = parseFloat(value) * 100 // Convert dollars to cents
     if (!isNaN(numValue) && numValue > 0) {
       setSelectedAmount(numValue)
     }
@@ -120,43 +124,66 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
 
   const handleGoogleSignIn = async () => {
     try {
-      setTipError('')
-      const ephemeralKeyPair = await createAuthSession()
-      const authUrl = getAuthUrl(ephemeralKeyPair)
-      window.location.href = authUrl
+      await signIn()
     } catch (error) {
-      console.error('Login error:', error)
-      setTipError('Failed to start authentication. Please try again.')
+      console.error('Sign in failed:', error)
     }
   }
 
-  const processTip = async () => {
-    if (!account || !profile) return
+  const handleSendTip = () => {
+    if (!account || !creator) return
     
-    setIsProcessing(true)
-    setTipError('')
-    
-    try {
-      // Convert amount from cents to APT (assuming 1 APT = $10 for demo)
-      const amountInAPT = selectedAmount / 1000 // $10 = 1 APT
-      
-      // Send tip using our TippingService
-      const txHash = await tippingService.sendTip(
-        account,
-        profile.walletAddress,
-        amountInAPT,
-        message || 'Thank you for your amazing content!'
-      )
-      
-      console.log('Tip sent successfully:', txHash)
-      
-      // Redirect to success page
-      router.push(`${ROUTES.TIP.CREATOR(slug)}/success?amount=${selectedAmount}&message=${encodeURIComponent(message)}&txHash=${txHash}`)
-    } catch (error) {
-      console.error('Tip processing failed:', error)
-      setTipError('Failed to send tip. Please try again.')
-      setIsProcessing(false)
+    // Validate amount
+    const finalAmount = customAmount ? parseFloat(customAmount) : selectedAmount
+    if (finalAmount <= 0) {
+      setTipError('Please enter a valid amount')
+      return
     }
+    
+    setTipError('')
+    setIsModalOpen(true)
+  }
+
+  const handleTipSuccess = async (hash: string, tipperAddress?: string) => {
+    console.log('🎯 Tip transaction successful!', { 
+      hash, 
+      tipperAddress, 
+      creatorId: creator?.id,
+      recipientAddress: creator?.walletAddress,
+      amount: customAmount ? parseFloat(customAmount) : selectedAmount,
+      message 
+    })
+    
+    // Sync blockchain data to database
+    if (creator?.id && creator?.walletAddress) {
+      try {
+        const syncResponse = await fetch('/api/blockchain/sync', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            profileId: creator.id,
+            walletAddress: creator.walletAddress,
+          }),
+        })
+        
+        if (syncResponse.ok) {
+          const syncData = await syncResponse.json()
+          console.log('✅ Database synced successfully:', syncData)
+        } else {
+          console.warn('⚠️ Database sync failed:', await syncResponse.text())
+        }
+      } catch (error) {
+        console.error('❌ Error syncing database:', error)
+      }
+    }
+    
+    // Convert amount from cents to APT for display
+    const amountInAPT = (customAmount ? parseFloat(customAmount) : selectedAmount) / 1000
+    
+    // Redirect to success page
+    router.push(`${ROUTES.TIP.CREATOR(creator.slug)}/success?amount=${customAmount ? parseFloat(customAmount) : selectedAmount}&message=${encodeURIComponent(message)}&txHash=${hash}`)
   }
 
   const formatAmountDisplay = (cents: number) => {
@@ -296,7 +323,7 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
                 <CardContent>
                   {creator.portfolioImages && creator.portfolioImages.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                      {creator.portfolioImages.map((image, index) => (
+                      {creator.portfolioImages.map((image: string, index: number) => (
                         <div key={index} className="aspect-square rounded-lg overflow-hidden">
                           <Image
                             src={image}
@@ -487,8 +514,8 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
                       
                       {/* Send Tip Button */}
                       <Button 
-                        onClick={processTip}
-                        disabled={isProcessing || selectedAmount <= 0}
+                        onClick={handleSendTip}
+                        disabled={isProcessing || (customAmount ? parseFloat(customAmount) <= 0 : selectedAmount <= 0)}
                         className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-semibold"
                         size="lg"
                       >
@@ -500,7 +527,7 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
                         ) : (
                           <>
                             <Heart className="w-5 h-5 mr-2" />
-                            Send {formatAmountDisplay(selectedAmount)} Tip
+                            Send {formatAmountDisplay(customAmount ? parseFloat(customAmount) : selectedAmount)} Tip
                           </>
                         )}
                       </Button>
@@ -550,6 +577,26 @@ export default function CreatorTipPage({ params }: CreatorTipPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Transaction Modal */}
+      {creator && (
+        <TransactionModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          transactionOptions={{
+            function: `${process.env.NEXT_PUBLIC_CONTRACT_ADDRESS}::${process.env.NEXT_PUBLIC_CONTRACT_MODULE}::send_tip`,
+            functionArguments: [
+              creator.walletAddress,
+              Math.round((customAmount ? parseFloat(customAmount) : selectedAmount) / 1000 * 100000000), // Convert to octas
+              message || 'Thank you for your amazing content!'
+            ],
+          }}
+          title="Send Tip"
+          description={`Send a tip to ${creator.name} using your Google account.`}
+          successMessage={`Tip sent successfully to ${creator.name}!`}
+          onSuccess={handleTipSuccess}
+        />
+      )}
     </div>
   )
 }

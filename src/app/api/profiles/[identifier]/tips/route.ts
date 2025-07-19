@@ -52,7 +52,17 @@ export async function POST(
     const { identifier } = await params;
     const body = await request.json();
     
-    const { amount, message, tipperAddress, tipperAccount } = body;
+    const { amount, message, tipperAddress, tipperAccount, blockchainTxHash, skipBlockchain } = body;
+    
+    console.log('📝 API: Processing tip request:', { 
+      identifier, 
+      amount, 
+      message, 
+      tipperAddress, 
+      hasTipperAccount: !!tipperAccount, 
+      blockchainTxHash, 
+      skipBlockchain 
+    });
     
     // Validate required fields
     if (!amount || !tipperAddress) {
@@ -78,6 +88,14 @@ export async function POST(
     const profileSlug = profileData.slug;
     const recipientAddress = profileData.walletAddress;
     
+    console.log('📊 API: Found profile:', { 
+      profileId, 
+      profileSlug, 
+      recipientAddress, 
+      currentTotalTips: profileData.totalTips,
+      currentTipCount: profileData.tipCount 
+    });
+    
     // Calculate tip breakdown using blockchain view function
     const { netAmount, platformFee } = await tippingService.calculateTipBreakdown(amount);
     
@@ -90,15 +108,18 @@ export async function POST(
         tipperAddress,
         amount: Math.round(amount * 100), // Convert to cents
         message,
-        transactionHash: null, // Will be updated when blockchain transaction is confirmed
+        transactionHash: blockchainTxHash || null, // Use provided hash or null
       })
       .returning();
     
-    // Send tip on blockchain if tipper account is provided
-    let blockchainTxHash: string | null = null;
-    if (tipperAccount) {
+    console.log('💾 API: Created tip in database:', { tipId: newTip.id, transactionHash: newTip.transactionHash });
+    
+    // Send tip on blockchain if tipper account is provided and not skipping
+    let finalBlockchainTxHash: string | null = blockchainTxHash;
+    if (tipperAccount && !skipBlockchain) {
       try {
-        blockchainTxHash = await tippingService.sendTip(
+        console.log('🔗 API: Sending tip on blockchain...');
+        finalBlockchainTxHash = await tippingService.sendTip(
           tipperAccount,
           recipientAddress,
           amount,
@@ -108,14 +129,18 @@ export async function POST(
         // Update tip with transaction hash
         await db
           .update(tips)
-          .set({ transactionHash: blockchainTxHash })
+          .set({ transactionHash: finalBlockchainTxHash })
           .where(eq(tips.id, newTip.id));
         
+        console.log('✅ API: Blockchain transaction successful:', finalBlockchainTxHash);
+        
       } catch (error) {
-        console.error('Failed to send tip on blockchain:', error);
+        console.error('❌ API: Failed to send tip on blockchain:', error);
         // Don't fail the request, just log the error
         // The tip is still recorded in the database
       }
+    } else if (skipBlockchain) {
+      console.log('⏭️ API: Skipping blockchain transaction (already completed)');
     }
     
     // Update profile tip statistics with safe null handling
@@ -123,29 +148,50 @@ export async function POST(
     const currentTipCount = profileData.tipCount || 0;
     const tipAmount = Math.round(amount * 100);
     
+    const newTotalTips = currentTotalTips + tipAmount;
+    const newTipCount = currentTipCount + 1;
+    const newAverageTip = Math.round(newTotalTips / newTipCount);
+    
+    console.log('📈 API: Updating profile stats:', { 
+      currentTotalTips, 
+      currentTipCount, 
+      tipAmount, 
+      newTotalTips, 
+      newTipCount, 
+      newAverageTip 
+    });
+    
     await db
       .update(profiles)
       .set({
-        totalTips: currentTotalTips + tipAmount,
-        tipCount: currentTipCount + 1,
-        averageTip: Math.round((currentTotalTips + tipAmount) / (currentTipCount + 1)),
+        totalTips: newTotalTips,
+        tipCount: newTipCount,
+        averageTip: newAverageTip,
         updatedAt: new Date(),
       })
       .where(eq(profiles.id, profileId));
     
+    console.log('✅ API: Profile stats updated successfully');
+    
     // Return the created tip with blockchain info
-    return NextResponse.json({
+    const response = {
       ...newTip,
-      blockchainTxHash,
+      blockchainTxHash: finalBlockchainTxHash,
       netAmount,
       platformFee,
-      message: blockchainTxHash 
-        ? 'Tip sent successfully on both database and blockchain'
-        : 'Tip recorded in database (blockchain transaction pending)'
-    }, { status: 201 });
+      message: skipBlockchain 
+        ? 'Tip synced from blockchain to database'
+        : finalBlockchainTxHash 
+          ? 'Tip sent successfully on both database and blockchain'
+          : 'Tip recorded in database (blockchain transaction pending)'
+    };
+    
+    console.log('🎉 API: Tip processing complete:', response);
+    
+    return NextResponse.json(response, { status: 201 });
     
   } catch (error) {
-    console.error('Error creating tip:', error);
+    console.error('❌ API: Error creating tip:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

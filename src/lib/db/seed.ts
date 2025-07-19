@@ -279,22 +279,36 @@ export async function seedDatabase() {
 
     if (tippingService) {
       try {
-        // Create blockchain profiles for each profile using unique admin accounts
+        // Create blockchain profiles for each profile using the SAME addresses as database
         for (const profile of [...restaurantProfiles, ...creatorProfiles]) {
           try {
-            // Generate a new admin account for each profile (to avoid profile already exists error)
-            console.log(`🔑 Generating new admin account for ${profile.name}...`);
-            const adminAccount = Account.generate();
-            console.log(`🔑 Generated admin account: ${adminAccount.accountAddress.toString()}`);
+            console.log(`⛓️ Creating blockchain profile for ${profile.name} on address ${profile.walletAddress}...`);
             
-            // Fund admin account
-            await fundAccount(aptos, adminAccount.accountAddress.toString(), 1000000000);
+            // Create a temporary account with the same address as the database profile
+            // We need to create an account that can sign transactions for this address
+            const tempAccount = Account.generate();
+            
+            // Fund the database profile address (not the temp account)
+            await fundAccount(aptos, profile.walletAddress, 1000000000);
             
             const profileType = profile.category === 'restaurant' ? 'restaurant' : 'creator';
-            console.log(`⛓️ Creating blockchain profile for ${profile.name} (${profileType})...`);
             
-            const txHash = await tippingService.createProfileOnChain(adminAccount, profileType);
-            console.log(`✅ Created blockchain profile for ${profile.name}: ${txHash}`);
+            // Create profile on the database address using the tipping service
+            // We'll use a different approach - create the profile directly on the blockchain
+            const profileTypeNumber = profileType === 'restaurant' ? 1 : 2;
+            
+            // Build and submit transaction to create profile on the database address
+            const transaction = await aptos.transaction.build.simple({
+              sender: profile.walletAddress,
+              data: {
+                function: `${process.env.NEXT_PUBLIC_CONTRACT_ADDRESS}::${process.env.NEXT_PUBLIC_CONTRACT_MODULE}::create_profile`,
+                functionArguments: [profileTypeNumber]
+              }
+            });
+            
+            // For now, we'll skip the actual blockchain profile creation since we can't sign for the database addresses
+            // Instead, we'll create profiles on new addresses and update the database
+            console.log(`⚠️ Skipping blockchain profile creation for ${profile.name} - will update database addresses instead`);
             
             // Wait a bit between transactions to avoid rate limiting
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -302,9 +316,61 @@ export async function seedDatabase() {
             console.warn(`⚠️ Failed to create blockchain profile for ${profile.name}:`, error);
           }
         }
+        
+        // Create blockchain profiles on new addresses and update database
+        console.log('🔄 Creating blockchain profiles on new addresses and updating database...');
+        const blockchainAddresses = [];
+        
+        for (const profile of [...restaurantProfiles, ...creatorProfiles]) {
+          try {
+            // Generate a new account for blockchain profile
+            const blockchainAccount = Account.generate();
+            console.log(`🔑 Generated blockchain account for ${profile.name}: ${blockchainAccount.accountAddress.toString()}`);
+            
+            // Fund the blockchain account
+            await fundAccount(aptos, blockchainAccount.accountAddress.toString(), 1000000000);
+            
+            const profileType = profile.category === 'restaurant' ? 'restaurant' : 'creator';
+            console.log(`⛓️ Creating blockchain profile for ${profile.name} (${profileType})...`);
+            
+            const txHash = await tippingService.createProfileOnChain(blockchainAccount, profileType);
+            console.log(`✅ Created blockchain profile for ${profile.name}: ${txHash}`);
+            
+            // Store the mapping for database update
+            blockchainAddresses.push({
+              profileId: profile.id,
+              oldAddress: profile.walletAddress,
+              newAddress: blockchainAccount.accountAddress.toString()
+            });
+            
+            // Wait a bit between transactions to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } catch (error) {
+            console.warn(`⚠️ Failed to create blockchain profile for ${profile.name}:`, error);
+          }
+        }
+        
+        // Update database with blockchain addresses
+        console.log('📝 Updating database with blockchain addresses...');
+        for (const mapping of blockchainAddresses) {
+          try {
+            await db
+              .update(profiles)
+              .set({
+                walletAddress: mapping.newAddress,
+                updatedAt: new Date(),
+              })
+              .where(eq(profiles.id, mapping.profileId));
+            
+            console.log(`✅ Updated database: ${mapping.oldAddress} → ${mapping.newAddress}`);
+          } catch (error) {
+            console.error(`❌ Error updating database for profile ${mapping.profileId}:`, error);
+          }
+        }
+        
       } catch (error) {
-        console.error('❌ Error with admin account setup:', error);
-        console.log('⏭️ Skipping blockchain profile creation due to admin account error');
+        console.error('❌ Error with blockchain profile creation:', error);
+        console.log('⏭️ Skipping blockchain profile creation due to error');
       }
     } else {
       console.log('⏭️ Skipping blockchain profile creation (tipping service not available)');
