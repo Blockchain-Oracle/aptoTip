@@ -11,6 +11,12 @@ TipLink eliminates crypto complexity by using **Aptos Keyless Accounts** with Go
 **Live Demo**: [https://apto-tip.vercel.app/](https://apto-tip.vercel.app/)  
 **GitHub**: [https://github.com/Blockchain-Oracle/aptoTip.git](https://github.com/Blockchain-Oracle/aptoTip.git)
 
+## 🎥 **Demo Video**
+
+[![TipLink Demo Video](https://img.youtube.com/vi/HiKGfPQmhqc/hqdefault.jpg)](https://www.youtube.com/watch?v=HiKGfPQmhqc)
+
+*Click the image above to watch the full demo video showcasing TipLink's zero-friction tipping experience*
+
 ---
 
 ## 📱 **Application Screenshots**
@@ -158,6 +164,11 @@ const tipEvents = await client.getEventsByEventHandle({
 - ✅ **Database**: PostgreSQL (Docker)
 - ✅ **File Storage**: UploadThing
 - ✅ **Authentication**: Google OAuth + Keyless
+
+### **Hackathon Submission**
+- 🏆 **DoraHacks**: [View on DoraHacks](https://dorahacks.io/buidl/28775)
+- 📋 **Track**: Payments and Finance
+- 🎯 **Status**: Submitted and Ready for Judging
 
 ### **Network Configuration**
 ```env
